@@ -45,6 +45,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   <style>
     #amber-dungeon-ui{--ad-bg:light-dark(#ddd7c7,#151c26);--ad-panel:light-dark(#f5efdf,#27313d);--ad-panel-2:light-dark(#e8deca,#35404c);--ad-ink:light-dark(#292b32,#f1eee7);--ad-sub:light-dark(#5b5b60,#bdc3c9);--ad-line:light-dark(#b9af9b,#52606c);--ad-amber:light-dark(#a76513,#ffc469);--ad-amber-bg:light-dark(#f7d89d,#6e4c24);--ad-tile:light-dark(#b6b5aa,#424b53);--ad-tile-alt:light-dark(#aaa99e,#3b444e);--ad-edge:light-dark(#8b8e87,#29333e);--ad-stone:light-dark(#bab6aa,#7b8790);--ad-stone-dark:light-dark(#85887f,#515d68);--ad-stone-light:light-dark(#d6d1c3,#a2adb3);--ad-green:light-dark(#28715c,#8ed0aa);--ad-red:light-dark(#a84438,#f0a09a);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);padding:12px 0;box-sizing:border-box}
     #amber-dungeon-ui *{box-sizing:border-box}
+    #amber-dungeon-ui{--ad-blue:light-dark(#356b9d,#8dbce5);--ad-brown:light-dark(#805833,#c6a16f)}
     #amber-dungeon-ui [hidden]{display:none!important}
     #amber-dungeon-ui button{font:inherit;min-height:44px;color:var(--ad-ink);background:var(--ad-panel);border:1px solid var(--ad-line);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500;touch-action:manipulation}
     #amber-dungeon-ui button:disabled{opacity:.45}
@@ -65,10 +66,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     #amber-dungeon-ui .ad-main>[data-mode]{position:absolute;bottom:12px;z-index:3;min-width:100px;box-shadow:0 3px 10px #00000018}
     #amber-dungeon-ui .ad-main>[data-mode="mine"]{left:12px}
     #amber-dungeon-ui .ad-main>[data-mode="build"]{right:12px}
-    #amber-dungeon-ui .ad-buildbar{position:absolute;right:12px;bottom:66px;width:248px;max-width:calc(100% - 24px);z-index:3;padding:8px;display:grid;gap:6px;background:var(--ad-panel-2);border:1px solid var(--ad-line);border-radius:12px;box-shadow:0 6px 18px #00000020}
+    #amber-dungeon-ui .ad-buildbar,#amber-dungeon-ui .ad-upgrade-panel{position:absolute;right:12px;bottom:66px;width:248px;max-width:calc(100% - 24px);z-index:3;padding:8px;display:grid;gap:6px;background:var(--ad-panel-2);border:1px solid var(--ad-line);border-radius:12px;box-shadow:0 6px 18px #00000020}
+    #amber-dungeon-ui .ad-buildbar{width:264px}
     #amber-dungeon-ui .ad-buildbar .ad-categories{display:flex;gap:5px}
     #amber-dungeon-ui .ad-buildbar button{flex:1;min-width:0;padding:7px 8px}
     #amber-dungeon-ui .ad-buildbar .ad-confirm{display:flex;gap:5px}
+    #amber-dungeon-ui .ad-upgrade-panel strong{font-size:14px;font-weight:500}
+    #amber-dungeon-ui .ad-upgrade-panel p{font-size:12px;line-height:1.4;margin:0;color:var(--ad-sub)}
+    #amber-dungeon-ui .ad-upgrade-actions{display:flex;gap:5px}
+    #amber-dungeon-ui .ad-upgrade-actions button{flex:1;min-width:0;padding:7px 8px}
     #amber-dungeon-ui .ad-cost{font-size:11px;color:var(--ad-sub);padding:0 3px}
     #amber-dungeon-ui .ad-status{min-width:0;max-width:50%;font-size:12px;color:var(--ad-sub);line-height:1.4;background:var(--ad-panel);padding:6px 9px;border-radius:7px}
     #amber-dungeon-ui .ad-screen{background:var(--ad-bg);padding:66px 12px 12px;min-height:376px}
@@ -93,7 +99,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       #amber-dungeon-ui .ad-shortcuts{right:8px;top:84px;gap:5px}
       #amber-dungeon-ui .ad-shortcuts button{min-width:62px;font-size:12px;padding:6px}
       #amber-dungeon-ui .ad-status{font-size:11px;padding:5px 6px;flex:1;max-width:none;overflow-wrap:anywhere}
-      #amber-dungeon-ui .ad-buildbar{right:8px;max-width:calc(100% - 16px)}
+      #amber-dungeon-ui .ad-buildbar,#amber-dungeon-ui .ad-upgrade-panel{right:8px;max-width:calc(100% - 16px)}
       #amber-dungeon-ui .ad-main>[data-mode="mine"]{left:8px}
       #amber-dungeon-ui .ad-main>[data-mode="build"]{right:8px}
       #amber-dungeon-ui .ad-screen-head{flex-wrap:wrap}
@@ -107,16 +113,16 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   <div class="ad-device">
     <header class="ad-top">
       <div class="ad-resources" aria-label="保有資源">
-        <span class="ad-resource">石材 <b data-stone>240</b></span>
-        <span class="ad-resource">鉱石 <b data-ore>120</b></span>
-        <span class="ad-resource">魔力 <b>80</b></span>
+        <span class="ad-resource">魔力 <b data-mana>20/100</b></span>
+        <span class="ad-resource">資材 <b data-materials>80</b></span>
+        <span class="ad-resource">資金 <b data-funds>40</b></span>
       </div>
       <span class="ad-status" data-status aria-live="polite">準備中</span>
     </header>
     <section class="ad-main" data-screen="main" aria-label="拠点のメイン画面">
       <div class="ad-map-wrap">
-          <button type="button" class="ad-map-input" aria-label="拠点の盤面。通常は矢印キーで移動、EnterまたはSpaceで施設と守備隊の名前を順に確認。Shift併用で逆順、Escapeで名前を消去。掘削・配置中は矢印キーで候補を選び、掘削はEnter、施設は配置するボタンで決定。">
-          <canvas aria-label="四角形のマスを斜めから見た拠点。外周の鉱床と、中心の防壁・兵器・罠を配置した区域。">地下拠点の配置図</canvas>
+          <button type="button" class="ad-map-input" aria-label="拠点の盤面。通常は矢印キーで移動、EnterまたはSpaceで施設を順に選択。Shift併用で逆順、Escapeで選択解除。選択後はTabで強化ボタンへ進めます。掘削・配置中は矢印キーで候補を選び、掘削はEnter、施設は配置するボタンで決定。">
+          <canvas aria-label="四角形のマスを斜めから見たLv1の拠点。施設の選択と自由配置、コボルドによる採掘を操作できます。">地下拠点の配置図</canvas>
         </button>
         <span class="ad-sr-only" data-inspection-status aria-live="polite"></span>
         <nav class="ad-shortcuts" aria-label="管理画面">
@@ -127,15 +133,25 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       <div class="ad-buildbar" data-buildbar hidden>
         <div class="ad-categories" aria-label="配置するもの">
           <button type="button" class="cursor-interaction" data-kind="wall" aria-pressed="true">防壁</button>
-          <button type="button" class="cursor-interaction" data-kind="turret" aria-pressed="false">兵器</button>
+          <button type="button" class="cursor-interaction" data-kind="archer" aria-pressed="false">弓塔</button>
+          <button type="button" class="cursor-interaction" data-kind="mage" aria-pressed="false">魔法塔</button>
           <button type="button" class="cursor-interaction" data-kind="trap" aria-pressed="false">罠</button>
         </div>
-        <span class="ad-cost" data-cost>石材 20</span>
+        <span class="ad-cost" data-cost></span>
         <div class="ad-confirm">
           <button type="button" class="cursor-interaction" data-cancel>取消</button>
           <button type="button" class="ad-primary cursor-interaction" data-confirm disabled>配置する</button>
         </div>
       </div>
+      <section class="ad-upgrade-panel" data-upgrade-panel aria-label="選択した施設の強化" hidden>
+        <strong data-facility-name></strong>
+        <p data-facility-stats></p>
+        <span class="ad-cost" data-upgrade-cost></span>
+        <div class="ad-upgrade-actions">
+          <button type="button" class="cursor-interaction" data-clear-selection>選択解除</button>
+          <button type="button" class="ad-primary cursor-interaction" data-upgrade disabled>強化する</button>
+        </div>
+      </section>
       <button type="button" class="cursor-interaction" data-mode="mine" aria-pressed="false">掘削</button>
       <button type="button" class="ad-primary cursor-interaction" data-mode="build" aria-pressed="false">施設配置</button>
     </section>
@@ -189,48 +205,177 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const ctx = canvas.getContext('2d');
     const mapButton = q('.ad-map-input');
     const wrap = q('.ad-map-wrap');
-    const names = {wall:'防壁',turret:'兵器',trap:'罠',core:'魔力核',research:'研究室',forge:'工房',defender:'守備隊'};
-    const prices = {wall:[20,0],turret:[50,20],trap:[0,20]};
-    const state = {screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,stone:240,ore:120,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
+    // Temporary values for this interaction prototype, not final game balance.
+    const CONFIG = {dungeonLevel:1,manaCap:100,initialResources:{mana:20,materials:80,funds:40},manaRates:{1:1,2:2},miningSeconds:8,miningYield:20,maxFacilityLevel:2};
+    const names = {well:'魔力井',archer:'エルフ弓塔',mage:'魔法塔',wall:'防壁',trap:'罠'};
+    const resourceNames = {mana:'魔力',materials:'資材',funds:'資金'};
+    const COSTS = {
+      build:{wall:{materials:10},archer:{materials:30,funds:15},mage:{materials:25,mana:20},trap:{materials:15,funds:5}},
+      upgrade:{well:{materials:20,funds:10},archer:{materials:30,funds:10},mage:{materials:30,mana:25},wall:{materials:20},trap:{materials:20,funds:5}}
+    };
+    const TOWER_POWER = {archer:{1:10,2:15},mage:{1:20,2:30}};
+    const state = {dungeonLevel:CONFIG.dungeonLevel,resources:{...CONFIG.initialResources},screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,nextStructureId:5,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,mining:{active:null,queue:[],completed:0},keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
     const deposits = [{x:0,y:1,job:false},{x:0,y:4,job:false},{x:2,y:0,job:false}];
-    const structures = [{x:7,y:2,type:'core'},{x:6,y:0,type:'research'},{x:8,y:5,type:'forge'},{x:4,y:2,type:'turret'},{x:4,y:6,type:'turret'},{x:3,y:4,type:'trap'},...[[2,1],[2,2],[2,5],[2,6],[3,1],[4,1],[5,1],[6,6]].map(([x,y])=>({x,y,type:'wall'}))];
-    const defenderUnit = {x:4.7,y:4.3,type:'defender'};
+    const structures = [{id:1,x:6,y:2,type:'well',level:1},{id:2,x:3,y:3,type:'archer',level:1},{id:3,x:5,y:4,type:'wall',level:1},{id:4,x:5,y:5,type:'wall',level:1}];
     let width=0,height=0,tw=0,th=0,ox=0,oy=0;
     let colors={};
     let hitRegions=[],paintTarget=null;
     const readColors = () => {
       const probe = document.createElement('span');
       probe.hidden = true;root.appendChild(probe);
-      ['bg','panel','panel-2','ink','sub','line','amber','amber-bg','tile','tile-alt','edge','stone','stone-dark','stone-light','green','red'].forEach(k=>{probe.style.color='var(--ad-'+k+')';colors[k]=getComputedStyle(probe).color;});
+      ['bg','panel','panel-2','ink','sub','line','amber','amber-bg','tile','tile-alt','edge','stone','stone-dark','stone-light','green','red','blue','brown'].forEach(k=>{probe.style.color='var(--ad-'+k+')';colors[k]=getComputedStyle(probe).color;});
       probe.remove();
     };
+    function facilityName(item){return names[item.type]+' Lv'+item.level;}
+    function formatCost(cost){return ['materials','mana','funds'].filter(key=>cost?.[key]).map(key=>resourceNames[key]+' '+cost[key]).join(' ＋ ');}
+    function canAfford(cost){
+      return !!cost&&Object.entries(cost).every(([key,value])=>Object.hasOwn(state.resources,key)&&Number.isFinite(value)&&value>=0&&state.resources[key]>=value);
+    }
+    function spendCost(cost){
+      // Check every balance before changing any of them.
+      if(!canAfford(cost))return false;
+      for(const [key,value] of Object.entries(cost))state.resources[key]-=value;
+      return true;
+    }
+    function manaRate(){return structures.filter(item=>item.type==='well').reduce((sum,item)=>sum+(CONFIG.manaRates[item.level]||0),0);}
+    function startNextMining(){
+      while(!state.mining.active&&state.mining.queue.length){
+        const index=state.mining.queue.shift();
+        if(deposits[index]?.job)state.mining.active={index,remaining:CONFIG.miningSeconds};
+      }
+    }
+    function advanceEconomy(seconds){
+      const result={manaGained:0,materialsGained:0,completed:0};
+      if(document.hidden||!Number.isFinite(seconds)||seconds<=0)return result;
+      const beforeMana=state.resources.mana;
+      state.resources.mana=Math.min(CONFIG.manaCap,state.resources.mana+manaRate()*seconds);
+      result.manaGained=state.resources.mana-beforeMana;
+      let remaining=seconds;
+      startNextMining();
+      while(remaining>0&&state.mining.active){
+        const job=state.mining.active;
+        const step=Math.min(remaining,job.remaining);
+        job.remaining-=step;remaining-=step;
+        if(job.remaining>1e-9)break;
+        deposits[job.index].job=false;
+        state.resources.materials+=CONFIG.miningYield;
+        state.mining.completed++;result.completed++;
+        result.materialsGained+=CONFIG.miningYield;
+        state.mining.active=null;
+        startNextMining();
+      }
+      refreshResources();
+      if(result.completed)status('採掘完了：資材 ＋'+result.materialsGained);
+      draw();
+      return result;
+    }
+    function updateBuildControls(){
+      const cost=COSTS.build[state.kind];
+      const affordable=canAfford(cost);
+      q('[data-cost]').textContent=formatCost(cost);
+      q('[data-confirm]').disabled=!state.preview||!validCell(state.preview.x,state.preview.y)||!affordable;
+      q('[data-confirm]').textContent=state.preview&&!affordable?'資源不足':'配置する';
+    }
+    function updateUpgradePanel(){
+      const item=state.infoTarget;
+      const selected=state.screen==='main'&&state.mode==='inspect'&&item&&structures.includes(item)&&state.infoSource!=='hover';
+      q('[data-upgrade-panel]').hidden=!selected;
+      if(!selected)return;
+      q('[data-facility-name]').textContent=facilityName(item);
+      let detail='';
+      if(item.type==='well')detail='魔力生成 '+CONFIG.manaRates[item.level]+'/秒';
+      else if(TOWER_POWER[item.type])detail='威力 '+TOWER_POWER[item.type][item.level]+'（仮）';
+      q('[data-facility-stats]').textContent=detail;
+      q('[data-facility-stats]').hidden=!detail;
+      const capped=item.level>=CONFIG.maxFacilityLevel;
+      const cost=COSTS.upgrade[item.type];
+      const affordable=canAfford(cost);
+      q('[data-upgrade-cost]').textContent=capped?'最大 Lv'+CONFIG.maxFacilityLevel:formatCost(cost);
+      q('[data-upgrade]').disabled=capped||!affordable;
+      q('[data-upgrade]').textContent=capped?'強化上限':affordable?'強化する':'資源不足';
+    }
+    function upgradeSelected(){
+      const item=state.infoTarget;
+      if(state.mode!=='inspect'||state.screen!=='main'||!item||state.infoSource==='hover'||!structures.includes(item)||item.level>=CONFIG.maxFacilityLevel)return false;
+      if(!spendCost(COSTS.upgrade[item.type])){status('資源が不足しています');updateUpgradePanel();return false;}
+      item.level++;
+      refreshResources();
+      q('[data-inspection-status]').textContent=facilityName(item)+'に強化しました';
+      status('施設を強化しました');
+      draw();return true;
+    }
+    function buildSelected(){
+      const point=state.preview;
+      if(state.mode!=='build'||!point||!validCell(point.x,point.y)){updateBuildControls();return false;}
+      if(!spendCost(COSTS.build[state.kind])){status('資源が不足しています');updateBuildControls();return false;}
+      structures.push({id:state.nextStructureId++,...point,type:state.kind,level:1});
+      state.preview=null;
+      refreshResources();status('施設を配置しました');draw();return true;
+    }
     function project(x,y,z=0){return{x:ox+(x-y)*tw,y:oy+(x+y)*th-z};}
     function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();}if(paintTarget)hitRegions.push({target:paintTarget,points});}
     function diamond(x,y,fill,z=0,scale=1,stroke){const c=project(x,y,z);polygon([{x:c.x,y:c.y-th*scale},{x:c.x+tw*scale,y:c.y},{x:c.x,y:c.y+th*scale},{x:c.x-tw*scale,y:c.y}],fill,stroke);}
     function block(x,y,h,scale,top,left,right,alpha=1){ctx.save();ctx.globalAlpha=alpha;const c=project(x,y),s=scale;const t=[{x:c.x,y:c.y-th*s-h},{x:c.x+tw*s,y:c.y-h},{x:c.x,y:c.y+th*s-h},{x:c.x-tw*s,y:c.y-h}];polygon([t[3],t[2],{x:t[2].x,y:t[2].y+h},{x:t[3].x,y:t[3].y+h}],left);polygon([t[2],t[1],{x:t[1].x,y:t[1].y+h},{x:t[2].x,y:t[2].y+h}],right);polygon(t,top);ctx.restore();}
     function label(x,y,text,color=colors.ink){ctx.font='500 12px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const w=ctx.measureText(text).width+12;x=Math.max(w/2+6,Math.min(width-w/2-6,x));y=Math.max(16,Math.min(height-16,y));ctx.fillStyle=colors.panel;ctx.beginPath();ctx.roundRect(x-w/2,y-10,w,20,5);ctx.fill();ctx.fillStyle=color;ctx.fillText(text,x,y);}
+    function drawTowerUnit(x,y,z,magic=false){
+      const c=project(x,y,z),s=Math.max(4,tw*.15),robe=magic?colors.blue:colors.green;
+      polygon([{x:c.x,y:c.y-s*3.4},{x:c.x+s*1.1,y:c.y-s*1.6},{x:c.x-s*1.1,y:c.y-s*1.6}],robe);
+      polygon([{x:c.x-s*.65,y:c.y-s*1.7},{x:c.x+s*.65,y:c.y-s*1.7},{x:c.x+s,y:c.y},{x:c.x-s,y:c.y}],robe);
+      ctx.fillStyle=colors['stone-light'];ctx.fillRect(c.x-s*.4,c.y-s*2.2,s*.8,s*.5);
+      ctx.strokeStyle=magic?colors['stone-light']:colors.brown;ctx.lineWidth=1.5;
+      ctx.beginPath();
+      if(magic){ctx.moveTo(c.x+s*1.6,c.y);ctx.lineTo(c.x+s*1.6,c.y-s*3.6);}
+      else{ctx.arc(c.x+s*.8,c.y-s*1.7,s*1.6,-Math.PI/2,Math.PI/2);ctx.moveTo(c.x+s*.8,c.y-s*3.3);ctx.lineTo(c.x+s*.8,c.y-s*.1);}
+      ctx.stroke();
+      if(magic){ctx.fillStyle=colors.amber;ctx.beginPath();ctx.arc(c.x+s*1.6,c.y-s*3.6,2.5,0,Math.PI*2);ctx.fill();}
+      if(paintTarget)hitRegions.push({target:paintTarget,points:[{x:c.x-s*1.1,y:c.y-s*3.8},{x:c.x+s*2.4,y:c.y-s*3.8},{x:c.x+s*2.4,y:c.y},{x:c.x-s*1.1,y:c.y}]});
+    }
     function drawStructure(item,ghost=false){
-      const {x,y,type}=item;const a=ghost?.55:1;paintTarget=ghost?null:item;
-      if(type==='wall')block(x,y,tw*.7,.8,colors['stone-light'],colors.stone,colors['stone-dark'],a);
-      else if(type==='turret'){block(x,y,tw*.65,.78,colors['stone-light'],colors.stone,colors['stone-dark'],a);block(x,y,tw*1.1,.28,colors.amber,colors['amber-bg'],colors['stone-dark'],a);}
-      else if(type==='trap'){ctx.save();ctx.globalAlpha=a;diamond(x,y,colors['stone-dark'],0,.73);const c=project(x,y);ctx.strokeStyle=colors.amber;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-tw*.35,c.y-th*.3);ctx.lineTo(c.x+tw*.35,c.y+th*.3);ctx.moveTo(c.x+tw*.35,c.y-th*.3);ctx.lineTo(c.x-tw*.35,c.y+th*.3);ctx.stroke();ctx.restore();}
-      else if(type==='core'){block(x,y,tw*.4,1.1,colors['stone-light'],colors.stone,colors['stone-dark']);const c=project(x,y,tw*.45);ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=16;polygon([{x:c.x,y:c.y-tw*1.35},{x:c.x+tw*.38,y:c.y-tw*.55},{x:c.x,y:c.y},{x:c.x-tw*.38,y:c.y-tw*.55}],colors.amber);ctx.restore();}
-      else if(type==='research'){block(x,y,tw*.8,.88,colors['stone-light'],colors.stone,colors['stone-dark']);diamond(x,y,colors['amber-bg'],tw*.8,.88);}
-      else if(type==='forge'){block(x,y,tw*.65,.95,colors['stone-light'],colors.stone,colors['stone-dark']);block(x,y,tw*.9,.35,colors.amber,colors['amber-bg'],colors['stone-dark']);}
-      paintTarget=null;
+      const {x,y,type}=item;const level=item.level||1,a=ghost?.55:1;paintTarget=ghost?null:item;
+      ctx.save();ctx.globalAlpha=a;
+      if(type==='wall')block(x,y,tw*(level===2?.9:.7),.8,colors['stone-light'],colors.stone,colors['stone-dark'],a);
+      else if(type==='archer'||type==='mage'){
+        const h=tw*((type==='mage'?1:.8)+(level===2?.15:0));
+        block(x,y,h,.78,colors['stone-light'],colors.stone,colors['stone-dark'],a);
+        diamond(x,y,type==='mage'?colors.blue:colors.brown,h,.66);
+        drawTowerUnit(x,y,h,type==='mage');
+      }else if(type==='trap'){
+        diamond(x,y,colors['stone-dark'],0,level===2?.82:.73);const c=project(x,y);
+        ctx.strokeStyle=colors.amber;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-tw*.35,c.y-th*.3);ctx.lineTo(c.x+tw*.35,c.y+th*.3);ctx.moveTo(c.x+tw*.35,c.y-th*.3);ctx.lineTo(c.x-tw*.35,c.y+th*.3);ctx.stroke();
+      }else if(type==='well'){
+        block(x,y,tw*.35,1,colors['stone-light'],colors.stone,colors['stone-dark'],a);
+        diamond(x,y,colors.edge,tw*.35,.67);
+        ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=level===2?22:14;
+        diamond(x,y,colors.amber,tw*.35,.43);ctx.restore();
+        const c=project(x,y,tw*.35);
+        polygon([{x:c.x,y:c.y-tw*.9},{x:c.x+tw*.15,y:c.y-tw*.35},{x:c.x,y:c.y},{x:c.x-tw*.15,y:c.y-tw*.35}],colors.amber);
+      }
+      ctx.restore();paintTarget=null;
+    }
+    function drawKobold(){
+      const active=state.mining.active;
+      const deposit=active?deposits[active.index]:null;
+      const c=deposit?project(deposit.x+.4,deposit.y+.55):project(.8,2.7);
+      ctx.fillStyle=colors['stone-dark'];ctx.beginPath();ctx.ellipse(c.x,c.y+5,7,3,0,0,Math.PI*2);ctx.fill();
+      polygon([{x:c.x-5,y:c.y-8},{x:c.x+5,y:c.y-8},{x:c.x+6,y:c.y+5},{x:c.x-6,y:c.y+5}],colors.brown);
+      polygon([{x:c.x-6,y:c.y-13},{x:c.x-2,y:c.y-10},{x:c.x+2,y:c.y-10},{x:c.x+6,y:c.y-13},{x:c.x+4,y:c.y-4},{x:c.x-4,y:c.y-4}],colors.brown);
+      if(active){ctx.strokeStyle=colors['stone-light'];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x+5,c.y+1);ctx.lineTo(c.x+12,c.y-10);ctx.moveTo(c.x+7,c.y-11);ctx.lineTo(c.x+16,c.y-6);ctx.stroke();}
     }
     function clearInspection(redraw=false){
       const changed=state.infoTarget!==null;
       state.infoTarget=null;state.infoSource=null;
       q('[data-inspection-status]').textContent='';
+      updateUpgradePanel();
       if(redraw&&changed)draw();
     }
     function selectInspection(target,source){
+      if(source==='hover'&&state.infoTarget&&(state.infoSource==='tap'||state.infoSource==='keyboard'))return;
       if(state.mode!=='inspect'||state.screen!=='main')target=null;
       const nextSource=target?source:null;
       const changed=state.infoTarget!==target||state.infoSource!==nextSource;
       state.infoTarget=target;state.infoSource=nextSource;
-      q('[data-inspection-status]').textContent=target&&source!=='hover'?names[target.type]:'';
+      q('[data-inspection-status]').textContent=target&&source!=='hover'?facilityName(target):'';
+      updateUpgradePanel();
       if(changed)draw();
     }
     function insidePolygon(x,y,points){
@@ -269,14 +414,19 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     }
     function drawInspection(){
       if(state.mode!=='inspect'||!state.infoTarget)return;
+      if(state.infoSource!=='hover'){
+        const p=project(state.infoTarget.x,state.infoTarget.y);
+        ctx.strokeStyle=colors.amber;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.95,th*.95,0,0,Math.PI*2);ctx.stroke();return;
+      }
       const points=hitRegions.filter(r=>r.target===state.infoTarget).flatMap(r=>r.points);
       if(!points.length)return;
       const left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x));
       const top=Math.min(...points.map(p=>p.y)),bottom=Math.max(...points.map(p=>p.y));
-      label((left+right)/2,top<70?bottom+14:top-14,names[state.infoTarget.type]);
+      label((left+right)/2,top<70?bottom+14:top-14,facilityName(state.infoTarget));
     }
     function cycleInspection(backwards=false){
-      const targets=[...structures,defenderUnit];
+      const targets=[...structures];
+      if(!targets.length)return;
       const current=targets.indexOf(state.infoTarget);
       const next=current<0?(backwards?targets.length-1:0):(current+(backwards?-1:1)+targets.length)%targets.length;
       selectInspection(targets[next],'keyboard');
@@ -288,29 +438,55 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       tw=Math.min((width-36)/18,(height-124)/8.3)*state.zoom;th=tw*.47;
       ox=width*.46+state.panX;oy=90+state.panY;
       for(let d=0;d<17;d++)for(let x=0;x<10;x++){const y=d-x;if(y<0||y>7)continue;diamond(x,y,(x+y)%2?colors['tile-alt']:colors.tile,0,1,colors.edge);}
-      for(let i=0;i<deposits.length;i++){const dep=deposits[i],p=project(dep.x,dep.y);block(dep.x,dep.y,tw*.8,.9,colors.stone,colors['stone-dark'],colors.edge);block(dep.x+.17,dep.y-.04,tw*1.0,.32,colors['stone-light'],colors.stone,colors['stone-dark']);if(state.mode==='mine'||dep.job){ctx.strokeStyle=dep.job?colors.amber:colors.green;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.94,th*.94,0,0,Math.PI*2);ctx.stroke();if(state.mode==='mine')label(p.x,p.y-tw-11,dep.job?'掘削予定':'鉱床',dep.job?colors.amber:colors.ink);}}
+      for(let i=0;i<deposits.length;i++){
+        const dep=deposits[i],p=project(dep.x,dep.y);
+        block(dep.x,dep.y,tw*.8,.9,colors.stone,colors['stone-dark'],colors.edge);block(dep.x+.17,dep.y-.04,tw*1.0,.32,colors['stone-light'],colors.stone,colors['stone-dark']);
+        if(state.mode==='mine'||dep.job){
+          ctx.strokeStyle=dep.job?colors.amber:colors.green;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.94,th*.94,0,0,Math.PI*2);ctx.stroke();
+          const active=state.mining.active?.index===i;
+          const text=active?'掘削中 '+Math.ceil(state.mining.active.remaining)+'秒':dep.job?'待機中':'鉱床';
+          if(state.mode==='mine')label(p.x,p.y-tw-11,text,dep.job?colors.amber:colors.ink);
+        }
+      }
       const sorted=[...structures].sort((a,b)=>(a.x+a.y)-(b.x+b.y));sorted.forEach(s=>drawStructure(s));
-      const defender=project(defenderUnit.x,defenderUnit.y);ctx.fillStyle=colors['stone-dark'];ctx.beginPath();ctx.ellipse(defender.x,defender.y+5,8,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=colors.green;ctx.beginPath();ctx.arc(defender.x,defender.y-8,5,0,Math.PI*2);ctx.fill();ctx.fillRect(defender.x-5,defender.y-3,10,12);
-      hitRegions.push({target:defenderUnit,points:[{x:defender.x-8,y:defender.y-14},{x:defender.x+8,y:defender.y-14},{x:defender.x+8,y:defender.y+9},{x:defender.x-8,y:defender.y+9}]});
-      if(state.preview&&state.mode==='build'){const p=state.preview;diamond(p.x,p.y,colors['amber-bg'],0,.98,colors.amber);drawStructure({x:p.x,y:p.y,type:state.kind},true);}
+      drawKobold();
+      if(state.preview&&state.mode==='build'){const p=state.preview;diamond(p.x,p.y,colors['amber-bg'],0,.98,colors.amber);drawStructure({x:p.x,y:p.y,type:state.kind,level:1},true);}
       drawInspection();
     }
     function resize(){const r=wrap.getBoundingClientRect();if(!r.width)return;width=r.width;height=r.height;const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);readColors();draw();}
     const status = (text,screen='main') => {state.messages[screen]=text;if(state.screen===screen)q('[data-status]').textContent=text;};
     function setScreen(name){clearInspection();const focusButton=name==='main'?q('[data-go="'+state.screen+'"]'):q('[data-screen="'+name+'"]').querySelector('[data-go="main"]');state.screen=name;qa('[data-screen]').forEach(el=>{el.hidden=el.dataset.screen!==name;});q('[data-status]').textContent=state.messages[name];requestAnimationFrame(()=>{if(name==='main')resize();focusButton?.focus({preventScroll:true});});}
-    function refreshResources(){q('[data-stone]').textContent=state.stone;q('[data-ore]').textContent=state.ore;}
+    function refreshResources(){
+      q('[data-mana]').textContent=Math.floor(state.resources.mana)+'/'+CONFIG.manaCap;
+      q('[data-materials]').textContent=state.resources.materials;
+      q('[data-funds]').textContent=state.resources.funds;
+      updateBuildControls();updateUpgradePanel();
+    }
     function updateMode(){
       clearInspection();
       qa('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
       q('[data-buildbar]').hidden=state.mode!=='build';
       q('[data-mode="build"]').textContent=state.mode==='build'?'配置終了':'施設配置';
       q('[data-mode="mine"]').textContent=state.mode==='mine'?'掘削終了':'掘削';
-      q('[data-confirm]').disabled=!state.preview;
+      updateBuildControls();
       draw();
     }
     function validCell(x,y){return x>=0&&x<10&&y>=0&&y<8&&!structures.some(s=>s.x===x&&s.y===y)&&!deposits.some(d=>d.x===x&&d.y===y);}
-    function previewCell(x,y){state.keyboard={x,y};if(validCell(x,y)){state.preview={x,y};q('[data-confirm]').disabled=false;status(names[state.kind]+'の位置を確認');}else{state.preview=null;q('[data-confirm]').disabled=true;status('空いているマスを選択');}draw();}
-    function markDeposit(index){deposits[index].job=!deposits[index].job;state.mineIndex=index;const n=deposits.filter(d=>d.job).length;status(n?'コボルドの掘削予定 '+n+'か所':'鉱床を選択');draw();}
+    function previewCell(x,y){state.keyboard={x,y};if(validCell(x,y)){state.preview={x,y};status('配置位置を確認');}else{state.preview=null;status('空いているマスを選択');}updateBuildControls();draw();}
+    function markDeposit(index){
+      if(!Number.isInteger(index)||!deposits[index])return false;
+      const deposit=deposits[index];state.mineIndex=index;
+      if(deposit.job){
+        deposit.job=false;
+        state.mining.queue=state.mining.queue.filter(i=>i!==index);
+        if(state.mining.active?.index===index)state.mining.active=null;
+        startNextMining();status('掘削指示を取り消しました');
+      }else{
+        deposit.job=true;state.mining.queue.push(index);startNextMining();
+        status('コボルドが順番に掘削します');
+      }
+      draw();return true;
+    }
     function mapAction(clientX,clientY,pointerType='mouse'){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
       if(state.mode==='build')previewCell(x,y);
       else if(state.mode==='mine'){let best=-1,dist=Infinity;deposits.forEach((d,i)=>{const p=project(d.x,d.y,tw*.3);const v=Math.hypot(p.x-px,p.y-py);if(v<dist){dist=v;best=i;}});if(best>=0&&dist<Math.max(28,tw*1.4))markDeposit(best);else status('鉱床を選んで掘削を指定');}
@@ -318,9 +494,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     }
     qa('[data-go]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.go)));
     qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
-    qa('[data-kind]').forEach(b=>b.addEventListener('click',()=>{state.kind=b.dataset.kind;qa('[data-kind]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const p=prices[state.kind];q('[data-cost]').textContent=[p[0]?'石材 '+p[0]:'',p[1]?'鉱石 '+p[1]:''].filter(Boolean).join(' / ');draw();}));
-    q('[data-cancel]').addEventListener('click',()=>{state.preview=null;q('[data-confirm]').disabled=true;status('空きマスを選択');draw();});
-    q('[data-confirm]').addEventListener('click',()=>{if(!state.preview)return;const [s,o]=prices[state.kind];if(state.stone<s||state.ore<o){status('資源が不足しています');return;}structures.push({...state.preview,type:state.kind});state.stone-=s;state.ore-=o;state.preview=null;refreshResources();q('[data-confirm]').disabled=true;status(names[state.kind]+'を配置。続けて配置できます');draw();});
+    qa('[data-kind]').forEach(b=>b.addEventListener('click',()=>{if(!COSTS.build[b.dataset.kind])return;state.kind=b.dataset.kind;qa('[data-kind]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));updateBuildControls();draw();}));
+    q('[data-cancel]').addEventListener('click',()=>{state.preview=null;updateBuildControls();status('空きマスを選択');draw();});
+    q('[data-confirm]').addEventListener('click',buildSelected);
+    q('[data-upgrade]').addEventListener('click',upgradeSelected);
+    q('[data-clear-selection]').addEventListener('click',()=>{clearInspection(true);mapButton.focus({preventScroll:true});});
+    q('[data-upgrade-panel]').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();clearInspection(true);mapButton.focus({preventScroll:true});}});
     qa('[data-research]').forEach(b=>b.addEventListener('click',()=>{qa('[data-research]').forEach(k=>{k.textContent=k===b?'研究に指定済み':'研究を指定';k.setAttribute('aria-pressed',String(k===b));});status('魔王の研究：'+b.dataset.research,'research');}));
     qa('[data-work]').forEach(b=>b.addEventListener('click',()=>{state.work=b.dataset.work;qa('[data-work]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const up=state.work==='upgrade';q('[data-item-name="sword"]').textContent=up?'鉄の剣 I → II':'鉄の剣';q('[data-item-name="armor"]').textContent=up?'鉄の鎧 I → II':'鉄の鎧';q('[data-item-detail="sword"]').textContent=up?'既存の武器を強化する。':'配下の近接攻撃用。';q('[data-item-detail="armor"]').textContent=up?'既存の防具を強化する。':'前衛の防御用。';qa('[data-weapon]').forEach(k=>k.textContent=up?'改良を指示':'製造を指示');}));
     qa('[data-weapon]').forEach(b=>b.addEventListener('click',()=>{state.orders++;status(b.dataset.weapon+'の'+(state.work==='upgrade'?'改良':'製造')+'を予約 ／ 工房 '+state.orders+'件','weapons');}));
@@ -375,8 +554,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       hoverResume={x:e.clientX,y:e.clientY};
       if(!pointers.size){start=null;pinch=null;}else if(start)start.moved=true;
     });
-    mapButton.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&!pointers.size)clearInspection(true);});
-    mapButton.addEventListener('blur',()=>clearInspection(true));
+    mapButton.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&!pointers.size&&state.infoSource==='hover')clearInspection(true);});
+    mapButton.addEventListener('blur',()=>{if(state.infoSource==='hover')clearInspection(true);});
     mapButton.addEventListener('click',e=>e.preventDefault());
     mapButton.addEventListener('wheel',e=>{e.preventDefault();clearInspection();hoverResume={x:e.clientX,y:e.clientY};state.zoom=Math.max(.8,Math.min(1.8,state.zoom-e.deltaY*.001));draw();},{passive:false});
     mapButton.addEventListener('keydown',e=>{
@@ -400,7 +579,16 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     new ResizeObserver(resize).observe(wrap);
     const mq=window.matchMedia('(prefers-color-scheme: dark)');mq.addEventListener?.('change',()=>{readColors();draw();});
     const themeObserver=new MutationObserver(()=>{readColors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
-    resize();
+    refreshResources();resize();
+    let lastEconomyTick=performance.now();
+    const economyTimer=window.setInterval(()=>{
+      if(root.isConnected===false){window.clearInterval(economyTimer);return;}
+      const now=performance.now();
+      const seconds=Math.max(0,(now-lastEconomyTick)/1000);lastEconomyTick=now;
+      // Do not replay a sleeping or throttled page's elapsed time.
+      advanceEconomy(Math.min(seconds,1));
+    },250);
+    document.addEventListener('visibilitychange',()=>{lastEconomyTick=performance.now();});
   })();
   </script>
 </div>
