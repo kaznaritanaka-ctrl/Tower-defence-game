@@ -3,3 +3,8 @@ __pycache__/
 art/generated/*.png
 art/generated/*.blend
 art/generated/*.blend1
+
+# Godot
+game/.godot/
+game/android/
+*.translation
