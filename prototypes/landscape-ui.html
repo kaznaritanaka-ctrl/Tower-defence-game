@@ -366,7 +366,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       raid.shots=raid.shots.filter(s=>s.t<1);
       if(!raidLive())return;
       raidTrapAct();
-      if(raid.next===raid.plan.length&&raid.enemies.every(e=>e.hp<=0)&&!raid.shots.some(s=>s.team==='defense'||s.team==='amber'))
+      if(raid.next===raid.plan.length&&raid.enemies.every(e=>e.hp<=0)&&raid.shots.length===0)
         raidFinish('win');
       if(raidLive())status('防衛中　中枢 '+Math.ceil(raidHP(raidCore()))+'/150　敵 '+raid.enemies.filter(e=>e.hp>0).length+'体');
       draw();
