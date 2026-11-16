@@ -1,6 +1,6 @@
 # アセット・プラグイン
 
-確認日：2026-11-16。Lv1プレビュー向けに、作者の公式配布から無料の実素材を取得した。調査候補と取得済みの原本を下記で区別する。Godot 4 は候補であり未確定。
+確認日：2026-11-16（取得素材）、2026-11-17（役割別の素材調査を追記）。Lv1プレビュー向けに、作者の公式配布から無料の実素材を取得した。調査候補と取得済みの原本を下記で区別する。Godot 4 は候補であり未確定。
 
 ## 取得した実素材
 
@@ -61,6 +61,55 @@ Quaternius は商品によって CC0 と QAL の表示が分かれる。QAL は�
 ゲームとして未検証なのは、リグの動的再生、弓と手・弦・矢の整合、発射イベントの時点、胸壁との干渉、スマホ実機の見やすさと負荷。静止ポーズを描画できても、射撃ゲーム処理の完成とは扱わない。Rig_Medium と Rig_Large の収録範囲は同一とは限らず、他シリーズへ動作を移す場合はリターゲットと調整が必要。
 
 今回の取得素材に本作用のコボルドは含まれないため、Lv1用のモデルを自作した。デーモンは4本腕でバフォメットを思わせる姿、サキュバスは女性のキャラクターという方向が決まった（2026-11-17）。該当する素材は未取得で、ドワーフの外観は未確定。追加導入時も取得元URL、版、採用ファイル、同梱ライセンスを記録する。
+
+## 役割別の素材調査（2026-11-17）
+
+[全体設計](OVERALL_DESIGN.md)で決まった役割に対して、KayKitを軸に使える素材を公式ページで調べた。**以下は調査結果であり、新たに取得した素材はない。** 価格と収録内容は調査日時点の商品ページの記載による。
+
+### 役割ごとの対応
+
+| 役割 | 候補の素材 | 費用 | 不足分 |
+| --- | --- | --- | --- |
+| 敵（侵入者） | Adventurers 2.0 の無料5体 | 無料 | なし。歩兵・弓兵・魔術師を敵として使える |
+| 敵の上位種 | Mystery Monthly Series 4 の Paladin、Series 5 の Black Knight | 各$19.99〜 | なし |
+| デーモン | Adventurers Extra の Barbarian、または Skeletons Extra の Skeleton Golem を素体にする | 各$7.95〜 | 腕2本の追加、山羊頭、角は自作 |
+| サキュバス | Series 5 の Tiefling が最も近い候補。無料の Mage を素体にする案もある | $19.99〜／無料 | 翼・尾などは自作 |
+| 弓塔・魔法塔の駐留者 | 取得済みの Ranger、Mage | 無料 | なし |
+| コボルド | 自作済み | — | 採掘所へ出入りする歩行の動作付け |
+| ドワーフ | 該当する既製モデルは見つかっていない | — | 自作。工房の見た目だけなら優先度は低い |
+| 地下の建築・小物 | Dungeon Remastered | 無料 | なし |
+| 動作 | Character Animations | 無料 | 採掘、4本腕の動き |
+
+### 配布物ごとの確認内容
+
+| 配布物 | 確認した内容 | 価格・ライセンス |
+| --- | --- | --- |
+| [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) | 版は2.0。無料5体。ExtraでEngineer・Druid・大柄なBarbarianの3体と、8体分の代替テクスチャ各3種が加わる。武器・小物は25点以上。FBX・glTF | 無料／Extra $7.95〜／Source $11.95〜。CC0 |
+| [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons) | 版は1.1。無料4体（Warrior、Rogue、Mage ほか1体）。Extraでボス向けのSkeleton GolemとNecromancerの2体が加わる。Character Animationsに対応 | 無料／Extra $7.95〜／Source $11.95〜。CC0 |
+| [KayKit Character Animations](https://kaylousberg.itch.io/kaykit-character-animations) | 無料枠で100以上の動作。待機・被弾・死亡、歩行・走行、片手・両手・素手・二刀の近接、弓・魔法、スケルトン用の動作。リグはRig_MediumとRig_Largeで、Largeは動作が少なめ。掘る・釣るなどの道具の動作は未収録で予定のみ | 無料／Source $14.99〜。CC0 |
+| [KayKit Dungeon Remastered](https://kaylousberg.itch.io/kaykit-dungeon-remastered) | 版は1.1。無料200点。壁・床・階段・扉、宝箱・樽・椅子・机・木箱・罠・旗。Extraは275点以上と代替テクスチャ6種。テクスチャは1024×1024のグラデーション画像1枚 | 無料／Extra $7.95〜／Source $11.95〜。CC0 |
+| [KayKit Mystery Monthly Series 4](https://kaylousberg.itch.io/kaykit-series-4) | 15体。Orc Raider、Paladin、Werewolf、Ninja などを含む。FBX・glTFと.blend。無料のAdventurersと技術的に同じ作りとの記載 | $19.99〜。CC0 |
+| [KayKit Mystery Monthly Series 5](https://kaylousberg.itch.io/kaykit-series-5) | 14体。Black Knight、Vampire、Witch、Frost Golem、Tiefling などを含む。FBX・glTFと.blend | $19.99〜。CC0 |
+| [Quaternius Ultimate Monsters](https://quaternius.com/packs/ultimatemonsters.html) | 動作付きのモンスター50体。FBX・OBJ・Blend。絵柄がKayKitと異なる | 無料。作者サイトの表示はCC0 |
+
+同じ作者は、墓地などの場面向けの Halloween Bits、クラフト向けの資源をまとめた Resource Bits、道具類の RPG Tools Bits、剣・弓・斧・盾・杖などの Fantasy Weapons Bits も出している。鉱石や装備の見た目の候補になる。
+
+### ダークファンタジーへの寄せ方
+
+KayKitのキャラクターと Dungeon Remastered は、テクスチャがグラデーション画像1枚にまとまっている。この画像を塗り替えると全部品の色調が一度に変わるため、色と照明の調整を中心にダーク化を進める方針と相性が良い。原本は書き換えず、調整後のテクスチャと処理を別に保存する。
+
+### 未確認の事項
+
+- Tiefling の外見と性別。名前だけを確認しており、サキュバスの素体に使えるかは商品ページの画像で判断する必要がある。
+- Adventurers の無料5体の名前。商品ページに記載がなかった。リポジトリではRangerとMageを取得済み。
+- Halloween Bits、Resource Bits、RPG Tools Bits、Fantasy Weapons Bits の収録内容と価格。
+- Quaternius Ultimate Monsters の個別の収録モデル。Sketchfabの掲載ページはCC BY 4.0と表示しており、作者サイトのCC0表示と食い違う。採用する場合は配布物の同梱ライセンスを確認する。
+- リポジトリが固定している Dungeon Remastered 1.0 と、現行1.1の差分。
+- 4本腕のモデルに既製の動作をどこまで流用できるか。追加の腕には骨と動きを別途付ける必要がある。
+
+### 進め方の提案
+
+wave 構造の試作は、新たに購入せずに進める。敵は無料の Adventurers、配下は仮の見た目で足りる。試作で骨格を確かめた後に、Series 5（Tiefling、Black Knight、Vampire、Witch）と Skeletons Extra（Skeleton Golem）の導入を検討する。
 
 ## 従来のAI候補
 
