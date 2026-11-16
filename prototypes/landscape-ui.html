@@ -59,6 +59,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     #amber-dungeon-ui .ad-map-input{position:absolute;inset:0;border:0;border-radius:0;background:transparent;padding:0;width:100%;height:100%;overflow:hidden;touch-action:none;cursor:grab}
     #amber-dungeon-ui .ad-map-input:active{cursor:grabbing}
     #amber-dungeon-ui canvas{width:100%;height:100%;display:block}
+    #amber-dungeon-ui .ad-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
     #amber-dungeon-ui .ad-shortcuts{position:absolute;right:12px;top:67px;display:grid;gap:7px}
     #amber-dungeon-ui .ad-shortcuts button{min-width:74px;background:var(--ad-panel)}
     #amber-dungeon-ui .ad-main>[data-mode]{position:absolute;bottom:12px;z-index:3;min-width:100px;box-shadow:0 3px 10px #00000018}
@@ -114,9 +115,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     </header>
     <section class="ad-main" data-screen="main" aria-label="拠点のメイン画面">
       <div class="ad-map-wrap">
-          <button type="button" class="ad-map-input" aria-label="地下拠点。掘削または配置を選んで盤面を操作。矢印キーで候補を選び、掘削はEnter、施設は配置するボタンで決定。">
+          <button type="button" class="ad-map-input" aria-label="拠点の盤面。通常は矢印キーで移動、EnterまたはSpaceで施設と守備隊の名前を順に確認。Shift併用で逆順、Escapeで名前を消去。掘削・配置中は矢印キーで候補を選び、掘削はEnter、施設は配置するボタンで決定。">
           <canvas aria-label="四角形のマスを斜めから見た拠点。外周の鉱床と、中心の防壁・兵器・罠を配置した区域。">地下拠点の配置図</canvas>
         </button>
+        <span class="ad-sr-only" data-inspection-status aria-live="polite"></span>
         <nav class="ad-shortcuts" aria-label="管理画面">
           <button type="button" class="cursor-interaction" data-go="research">研究</button>
           <button type="button" class="cursor-interaction" data-go="weapons">武器・防具</button>
@@ -187,13 +189,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const ctx = canvas.getContext('2d');
     const mapButton = q('.ad-map-input');
     const wrap = q('.ad-map-wrap');
-    const names = {wall:'防壁',turret:'兵器',trap:'罠'};
+    const names = {wall:'防壁',turret:'兵器',trap:'罠',core:'魔力核',research:'研究室',forge:'工房',defender:'守備隊'};
     const prices = {wall:[20,0],turret:[50,20],trap:[0,20]};
-    const state = {screen:'main',mode:'inspect',kind:'wall',preview:null,stone:240,ore:120,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
+    const state = {screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,stone:240,ore:120,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
     const deposits = [{x:0,y:1,job:false},{x:0,y:4,job:false},{x:2,y:0,job:false}];
     const structures = [{x:7,y:2,type:'core'},{x:6,y:0,type:'research'},{x:8,y:5,type:'forge'},{x:4,y:2,type:'turret'},{x:4,y:6,type:'turret'},{x:3,y:4,type:'trap'},...[[2,1],[2,2],[2,5],[2,6],[3,1],[4,1],[5,1],[6,6]].map(([x,y])=>({x,y,type:'wall'}))];
+    const defenderUnit = {x:4.7,y:4.3,type:'defender'};
     let width=0,height=0,tw=0,th=0,ox=0,oy=0;
     let colors={};
+    let hitRegions=[],paintTarget=null;
     const readColors = () => {
       const probe = document.createElement('span');
       probe.hidden = true;root.appendChild(probe);
@@ -201,36 +205,102 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       probe.remove();
     };
     function project(x,y,z=0){return{x:ox+(x-y)*tw,y:oy+(x+y)*th-z};}
-    function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();}}
+    function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();}if(paintTarget)hitRegions.push({target:paintTarget,points});}
     function diamond(x,y,fill,z=0,scale=1,stroke){const c=project(x,y,z);polygon([{x:c.x,y:c.y-th*scale},{x:c.x+tw*scale,y:c.y},{x:c.x,y:c.y+th*scale},{x:c.x-tw*scale,y:c.y}],fill,stroke);}
     function block(x,y,h,scale,top,left,right,alpha=1){ctx.save();ctx.globalAlpha=alpha;const c=project(x,y),s=scale;const t=[{x:c.x,y:c.y-th*s-h},{x:c.x+tw*s,y:c.y-h},{x:c.x,y:c.y+th*s-h},{x:c.x-tw*s,y:c.y-h}];polygon([t[3],t[2],{x:t[2].x,y:t[2].y+h},{x:t[3].x,y:t[3].y+h}],left);polygon([t[2],t[1],{x:t[1].x,y:t[1].y+h},{x:t[2].x,y:t[2].y+h}],right);polygon(t,top);ctx.restore();}
-    function label(x,y,text,color=colors.ink){ctx.font='500 12px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const w=ctx.measureText(text).width+12;ctx.fillStyle=colors.panel;ctx.beginPath();ctx.roundRect(x-w/2,y-10,w,20,5);ctx.fill();ctx.fillStyle=color;ctx.fillText(text,x,y);}
+    function label(x,y,text,color=colors.ink){ctx.font='500 12px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const w=ctx.measureText(text).width+12;x=Math.max(w/2+6,Math.min(width-w/2-6,x));y=Math.max(16,Math.min(height-16,y));ctx.fillStyle=colors.panel;ctx.beginPath();ctx.roundRect(x-w/2,y-10,w,20,5);ctx.fill();ctx.fillStyle=color;ctx.fillText(text,x,y);}
     function drawStructure(item,ghost=false){
-      const {x,y,type}=item;const p=project(x,y),a=ghost?.55:1;
+      const {x,y,type}=item;const a=ghost?.55:1;paintTarget=ghost?null:item;
       if(type==='wall')block(x,y,tw*.7,.8,colors['stone-light'],colors.stone,colors['stone-dark'],a);
       else if(type==='turret'){block(x,y,tw*.65,.78,colors['stone-light'],colors.stone,colors['stone-dark'],a);block(x,y,tw*1.1,.28,colors.amber,colors['amber-bg'],colors['stone-dark'],a);}
       else if(type==='trap'){ctx.save();ctx.globalAlpha=a;diamond(x,y,colors['stone-dark'],0,.73);const c=project(x,y);ctx.strokeStyle=colors.amber;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-tw*.35,c.y-th*.3);ctx.lineTo(c.x+tw*.35,c.y+th*.3);ctx.moveTo(c.x+tw*.35,c.y-th*.3);ctx.lineTo(c.x-tw*.35,c.y+th*.3);ctx.stroke();ctx.restore();}
-      else if(type==='core'){block(x,y,tw*.4,1.1,colors['stone-light'],colors.stone,colors['stone-dark']);const c=project(x,y,tw*.45);ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=16;polygon([{x:c.x,y:c.y-tw*1.35},{x:c.x+tw*.38,y:c.y-tw*.55},{x:c.x,y:c.y},{x:c.x-tw*.38,y:c.y-tw*.55}],colors.amber);ctx.restore();label(p.x,p.y+th+12,'魔力核');}
-      else if(type==='research'){block(x,y,tw*.8,.88,colors['stone-light'],colors.stone,colors['stone-dark']);diamond(x,y,colors['amber-bg'],tw*.8,.88);label(p.x,p.y-tw*1.0-14,'研究室');}
-      else if(type==='forge'){block(x,y,tw*.65,.95,colors['stone-light'],colors.stone,colors['stone-dark']);block(x,y,tw*.9,.35,colors.amber,colors['amber-bg'],colors['stone-dark']);label(p.x,p.y+th+11,'工房');}
+      else if(type==='core'){block(x,y,tw*.4,1.1,colors['stone-light'],colors.stone,colors['stone-dark']);const c=project(x,y,tw*.45);ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=16;polygon([{x:c.x,y:c.y-tw*1.35},{x:c.x+tw*.38,y:c.y-tw*.55},{x:c.x,y:c.y},{x:c.x-tw*.38,y:c.y-tw*.55}],colors.amber);ctx.restore();}
+      else if(type==='research'){block(x,y,tw*.8,.88,colors['stone-light'],colors.stone,colors['stone-dark']);diamond(x,y,colors['amber-bg'],tw*.8,.88);}
+      else if(type==='forge'){block(x,y,tw*.65,.95,colors['stone-light'],colors.stone,colors['stone-dark']);block(x,y,tw*.9,.35,colors.amber,colors['amber-bg'],colors['stone-dark']);}
+      paintTarget=null;
+    }
+    function clearInspection(redraw=false){
+      const changed=state.infoTarget!==null;
+      state.infoTarget=null;state.infoSource=null;
+      q('[data-inspection-status]').textContent='';
+      if(redraw&&changed)draw();
+    }
+    function selectInspection(target,source){
+      if(state.mode!=='inspect'||state.screen!=='main')target=null;
+      const nextSource=target?source:null;
+      const changed=state.infoTarget!==target||state.infoSource!==nextSource;
+      state.infoTarget=target;state.infoSource=nextSource;
+      q('[data-inspection-status]').textContent=target&&source!=='hover'?names[target.type]:'';
+      if(changed)draw();
+    }
+    function insidePolygon(x,y,points){
+      let inside=false;
+      for(let i=0,j=points.length-1;i<points.length;j=i++){
+        const a=points[i],b=points[j];
+        if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+      }
+      return inside;
+    }
+    function edgeDistance(x,y,a,b){
+      const dx=b.x-a.x,dy=b.y-a.y;
+      const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1)));
+      return Math.hypot(x-a.x-t*dx,y-a.y-t*dy);
+    }
+    function hitInspection(x,y,coarse=false){
+      // Each face uses the same projected points as the actual drawing.
+      // Reverse paint order gives the visible foreground object priority.
+      for(let i=hitRegions.length-1;i>=0;i--){
+        const region=hitRegions[i];
+        if(insidePolygon(x,y,region.points))return region.target;
+      }
+      let best=null,distance=coarse?14:2;
+      for(let i=hitRegions.length-1;i>=0;i--){
+        const region=hitRegions[i],points=region.points;
+        for(let j=0;j<points.length;j++){
+          const d=edgeDistance(x,y,points[j],points[(j+1)%points.length]);
+          if(d<distance){distance=d;best=region.target;}
+        }
+      }
+      return best;
+    }
+    function inspectPointer(clientX,clientY,source,coarse=false){
+      const r=mapButton.getBoundingClientRect();
+      selectInspection(hitInspection(clientX-r.left,clientY-r.top,coarse),source);
+    }
+    function drawInspection(){
+      if(state.mode!=='inspect'||!state.infoTarget)return;
+      const points=hitRegions.filter(r=>r.target===state.infoTarget).flatMap(r=>r.points);
+      if(!points.length)return;
+      const left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x));
+      const top=Math.min(...points.map(p=>p.y)),bottom=Math.max(...points.map(p=>p.y));
+      label((left+right)/2,top<70?bottom+14:top-14,names[state.infoTarget.type]);
+    }
+    function cycleInspection(backwards=false){
+      const targets=[...structures,defenderUnit];
+      const current=targets.indexOf(state.infoTarget);
+      const next=current<0?(backwards?targets.length-1:0):(current+(backwards?-1:1)+targets.length)%targets.length;
+      selectInspection(targets[next],'keyboard');
     }
     function draw(){
       if(!width||state.screen!=='main')return;
+      hitRegions=[];paintTarget=null;
       ctx.clearRect(0,0,width,height);ctx.fillStyle=colors.bg;ctx.fillRect(0,0,width,height);
       tw=Math.min((width-36)/18,(height-124)/8.3)*state.zoom;th=tw*.47;
       ox=width*.46+state.panX;oy=90+state.panY;
       for(let d=0;d<17;d++)for(let x=0;x<10;x++){const y=d-x;if(y<0||y>7)continue;diamond(x,y,(x+y)%2?colors['tile-alt']:colors.tile,0,1,colors.edge);}
-      for(let i=0;i<deposits.length;i++){const dep=deposits[i],p=project(dep.x,dep.y);block(dep.x,dep.y,tw*.8,.9,colors.stone,colors['stone-dark'],colors.edge);block(dep.x+.17,dep.y-.04,tw*1.0,.32,colors['stone-light'],colors.stone,colors['stone-dark']);if(state.mode==='mine'||dep.job){ctx.strokeStyle=dep.job?colors.amber:colors.green;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.94,th*.94,0,0,Math.PI*2);ctx.stroke();label(p.x,p.y-tw-11,dep.job?'掘削予定':'鉱床',dep.job?colors.amber:colors.ink);}}
+      for(let i=0;i<deposits.length;i++){const dep=deposits[i],p=project(dep.x,dep.y);block(dep.x,dep.y,tw*.8,.9,colors.stone,colors['stone-dark'],colors.edge);block(dep.x+.17,dep.y-.04,tw*1.0,.32,colors['stone-light'],colors.stone,colors['stone-dark']);if(state.mode==='mine'||dep.job){ctx.strokeStyle=dep.job?colors.amber:colors.green;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.94,th*.94,0,0,Math.PI*2);ctx.stroke();if(state.mode==='mine')label(p.x,p.y-tw-11,dep.job?'掘削予定':'鉱床',dep.job?colors.amber:colors.ink);}}
       const sorted=[...structures].sort((a,b)=>(a.x+a.y)-(b.x+b.y));sorted.forEach(s=>drawStructure(s));
-      const defender=project(4.7,4.3);ctx.fillStyle=colors['stone-dark'];ctx.beginPath();ctx.ellipse(defender.x,defender.y+5,8,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=colors.green;ctx.beginPath();ctx.arc(defender.x,defender.y-8,5,0,Math.PI*2);ctx.fill();ctx.fillRect(defender.x-5,defender.y-3,10,12);label(defender.x+30,defender.y-11,'守備隊');
-      const entry=project(0,7);label(entry.x,entry.y+20,'侵入口',colors.red);
+      const defender=project(defenderUnit.x,defenderUnit.y);ctx.fillStyle=colors['stone-dark'];ctx.beginPath();ctx.ellipse(defender.x,defender.y+5,8,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=colors.green;ctx.beginPath();ctx.arc(defender.x,defender.y-8,5,0,Math.PI*2);ctx.fill();ctx.fillRect(defender.x-5,defender.y-3,10,12);
+      hitRegions.push({target:defenderUnit,points:[{x:defender.x-8,y:defender.y-14},{x:defender.x+8,y:defender.y-14},{x:defender.x+8,y:defender.y+9},{x:defender.x-8,y:defender.y+9}]});
       if(state.preview&&state.mode==='build'){const p=state.preview;diamond(p.x,p.y,colors['amber-bg'],0,.98,colors.amber);drawStructure({x:p.x,y:p.y,type:state.kind},true);}
+      drawInspection();
     }
     function resize(){const r=wrap.getBoundingClientRect();if(!r.width)return;width=r.width;height=r.height;const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);readColors();draw();}
     const status = (text,screen='main') => {state.messages[screen]=text;if(state.screen===screen)q('[data-status]').textContent=text;};
-    function setScreen(name){const focusButton=name==='main'?q('[data-go="'+state.screen+'"]'):q('[data-screen="'+name+'"]').querySelector('[data-go="main"]');state.screen=name;qa('[data-screen]').forEach(el=>{el.hidden=el.dataset.screen!==name;});q('[data-status]').textContent=state.messages[name];requestAnimationFrame(()=>{if(name==='main')resize();focusButton?.focus({preventScroll:true});});}
+    function setScreen(name){clearInspection();const focusButton=name==='main'?q('[data-go="'+state.screen+'"]'):q('[data-screen="'+name+'"]').querySelector('[data-go="main"]');state.screen=name;qa('[data-screen]').forEach(el=>{el.hidden=el.dataset.screen!==name;});q('[data-status]').textContent=state.messages[name];requestAnimationFrame(()=>{if(name==='main')resize();focusButton?.focus({preventScroll:true});});}
     function refreshResources(){q('[data-stone]').textContent=state.stone;q('[data-ore]').textContent=state.ore;}
     function updateMode(){
+      clearInspection();
       qa('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
       q('[data-buildbar]').hidden=state.mode!=='build';
       q('[data-mode="build"]').textContent=state.mode==='build'?'配置終了':'施設配置';
@@ -238,13 +308,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       q('[data-confirm]').disabled=!state.preview;
       draw();
     }
-    function validCell(x,y){return x>=0&&x<10&&y>=0&&y<8&&!(x===0&&y===7)&&!structures.some(s=>s.x===x&&s.y===y)&&!deposits.some(d=>d.x===x&&d.y===y);}
+    function validCell(x,y){return x>=0&&x<10&&y>=0&&y<8&&!structures.some(s=>s.x===x&&s.y===y)&&!deposits.some(d=>d.x===x&&d.y===y);}
     function previewCell(x,y){state.keyboard={x,y};if(validCell(x,y)){state.preview={x,y};q('[data-confirm]').disabled=false;status(names[state.kind]+'の位置を確認');}else{state.preview=null;q('[data-confirm]').disabled=true;status('空いているマスを選択');}draw();}
     function markDeposit(index){deposits[index].job=!deposits[index].job;state.mineIndex=index;const n=deposits.filter(d=>d.job).length;status(n?'コボルドの掘削予定 '+n+'か所':'鉱床を選択');draw();}
-    function mapAction(clientX,clientY){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
+    function mapAction(clientX,clientY,pointerType='mouse'){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
       if(state.mode==='build')previewCell(x,y);
       else if(state.mode==='mine'){let best=-1,dist=Infinity;deposits.forEach((d,i)=>{const p=project(d.x,d.y,tw*.3);const v=Math.hypot(p.x-px,p.y-py);if(v<dist){dist=v;best=i;}});if(best>=0&&dist<Math.max(28,tw*1.4))markDeposit(best);else status('鉱床を選んで掘削を指定');}
-      else {const item=structures.find(s=>s.x===x&&s.y===y);if(item?.type==='research')setScreen('research');else if(item?.type==='forge')setScreen('weapons');}
+      else inspectPointer(clientX,clientY,'tap',pointerType==='touch');
     }
     qa('[data-go]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.go)));
     qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
@@ -254,14 +324,79 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     qa('[data-research]').forEach(b=>b.addEventListener('click',()=>{qa('[data-research]').forEach(k=>{k.textContent=k===b?'研究に指定済み':'研究を指定';k.setAttribute('aria-pressed',String(k===b));});status('魔王の研究：'+b.dataset.research,'research');}));
     qa('[data-work]').forEach(b=>b.addEventListener('click',()=>{state.work=b.dataset.work;qa('[data-work]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const up=state.work==='upgrade';q('[data-item-name="sword"]').textContent=up?'鉄の剣 I → II':'鉄の剣';q('[data-item-name="armor"]').textContent=up?'鉄の鎧 I → II':'鉄の鎧';q('[data-item-detail="sword"]').textContent=up?'既存の武器を強化する。':'配下の近接攻撃用。';q('[data-item-detail="armor"]').textContent=up?'既存の防具を強化する。':'前衛の防御用。';qa('[data-weapon]').forEach(k=>k.textContent=up?'改良を指示':'製造を指示');}));
     qa('[data-weapon]').forEach(b=>b.addEventListener('click',()=>{state.orders++;status(b.dataset.weapon+'の'+(state.work==='upgrade'?'改良':'製造')+'を予約 ／ 工房 '+state.orders+'件','weapons');}));
-    let start=null;const pointers=new Map();let pinch=null;
-    mapButton.addEventListener('pointerdown',e=>{mapButton.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});start={x:e.clientX,y:e.clientY,panX:state.panX,panY:state.panY,moved:false};if(pointers.size===2){const a=[...pointers.values()];pinch={distance:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),zoom:state.zoom};}});
-    mapButton.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2&&pinch){const a=[...pointers.values()];state.zoom=Math.max(.8,Math.min(1.8,pinch.zoom*Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)/Math.max(1,pinch.distance)));if(start)start.moved=true;draw();return;}if(start){const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.hypot(dx,dy)>7)start.moved=true;if(start.moved){state.panX=start.panX+dx;state.panY=start.panY+dy;draw();}}});
-    mapButton.addEventListener('pointerup',e=>{const act=start&&!start.moved&&!pinch;pointers.delete(e.pointerId);if(act)mapAction(e.clientX,e.clientY);if(!pointers.size){start=null;pinch=null;}});
-    mapButton.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);start=null;pinch=null;});
+    let start=null;const pointers=new Map();let pinch=null,hoverResume=null;
+    mapButton.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse'&&e.button>0)return;
+      clearInspection(true);
+      mapButton.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pointers.size===1)start={id:e.pointerId,x:e.clientX,y:e.clientY,panX:state.panX,panY:state.panY,moved:false};
+      else{
+        if(start)start.moved=true;
+        if(pointers.size===2){const a=[...pointers.values()];pinch={distance:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),zoom:state.zoom};}
+      }
+    });
+    mapButton.addEventListener('pointermove',e=>{
+      if(!pointers.has(e.pointerId)){
+        if(pointers.size||state.mode!=='inspect'||state.screen!=='main'||e.pointerType==='touch'||e.buttons)return;
+        if(hoverResume&&Math.hypot(e.clientX-hoverResume.x,e.clientY-hoverResume.y)<4)return;
+        hoverResume=null;
+        inspectPointer(e.clientX,e.clientY,'hover');
+        return;
+      }
+      pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pointers.size>=2&&pinch){
+        const a=[...pointers.values()];
+        state.zoom=Math.max(.8,Math.min(1.8,pinch.zoom*Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)/Math.max(1,pinch.distance)));
+        if(start)start.moved=true;
+        draw();return;
+      }
+      if(pinch)return;
+      if(start){
+        const dx=e.clientX-start.x,dy=e.clientY-start.y;
+        if(Math.hypot(dx,dy)>7)start.moved=true;
+        if(start.moved){state.panX=start.panX+dx;state.panY=start.panY+dy;draw();}
+      }
+    });
+    mapButton.addEventListener('pointerup',e=>{
+      if(!pointers.has(e.pointerId))return;
+      const travel=start?Math.hypot(e.clientX-start.x,e.clientY-start.y):Infinity;
+      const act=pointers.size===1&&start&&start.id===e.pointerId&&!start.moved&&!pinch&&travel<=7;
+      const wasGesture=start?.moved||pinch||travel>7;
+      pointers.delete(e.pointerId);
+      if(act)mapAction(e.clientX,e.clientY,e.pointerType);
+      if(!pointers.size){
+        if(wasGesture)hoverResume={x:e.clientX,y:e.clientY};
+        start=null;pinch=null;
+      }
+    });
+    mapButton.addEventListener('pointercancel',e=>{
+      pointers.delete(e.pointerId);clearInspection(true);
+      hoverResume={x:e.clientX,y:e.clientY};
+      if(!pointers.size){start=null;pinch=null;}else if(start)start.moved=true;
+    });
+    mapButton.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&!pointers.size)clearInspection(true);});
+    mapButton.addEventListener('blur',()=>clearInspection(true));
     mapButton.addEventListener('click',e=>e.preventDefault());
-    mapButton.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(.8,Math.min(1.8,state.zoom-e.deltaY*.001));draw();},{passive:false});
-    mapButton.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' '].includes(e.key))return;e.preventDefault();if(state.mode==='build'){let{x,y}=state.keyboard;if(e.key==='ArrowLeft')x--;if(e.key==='ArrowRight')x++;if(e.key==='ArrowUp')y--;if(e.key==='ArrowDown')y++;previewCell(Math.max(0,Math.min(9,x)),Math.max(0,Math.min(7,y)));}else if(state.mode==='mine'){if(e.key==='Enter'||e.key===' ')markDeposit(state.mineIndex);else{state.mineIndex=(state.mineIndex+(e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)+deposits.length)%deposits.length;status('鉱床 '+(state.mineIndex+1)+' を選択。Enterで掘削指定');}}else{if(e.key==='ArrowLeft')state.panX+=20;if(e.key==='ArrowRight')state.panX-=20;if(e.key==='ArrowUp')state.panY+=20;if(e.key==='ArrowDown')state.panY-=20;draw();}});
+    mapButton.addEventListener('wheel',e=>{e.preventDefault();clearInspection();hoverResume={x:e.clientX,y:e.clientY};state.zoom=Math.max(.8,Math.min(1.8,state.zoom-e.deltaY*.001));draw();},{passive:false});
+    mapButton.addEventListener('keydown',e=>{
+      if(e.key==='Escape'&&state.mode==='inspect'){e.preventDefault();clearInspection(true);return;}
+      if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' '].includes(e.key))return;
+      e.preventDefault();
+      if(state.mode==='build'){
+        let{x,y}=state.keyboard;
+        if(e.key==='ArrowLeft')x--;if(e.key==='ArrowRight')x++;if(e.key==='ArrowUp')y--;if(e.key==='ArrowDown')y++;
+        previewCell(Math.max(0,Math.min(9,x)),Math.max(0,Math.min(7,y)));
+      }else if(state.mode==='mine'){
+        if(e.key==='Enter'||e.key===' ')markDeposit(state.mineIndex);
+        else{state.mineIndex=(state.mineIndex+(e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)+deposits.length)%deposits.length;status('鉱床 '+(state.mineIndex+1)+' を選択。Enterで掘削指定');}
+      }else if(e.key==='Enter'||e.key===' ')cycleInspection(e.shiftKey);
+      else{
+        clearInspection();
+        if(e.key==='ArrowLeft')state.panX+=20;if(e.key==='ArrowRight')state.panX-=20;if(e.key==='ArrowUp')state.panY+=20;if(e.key==='ArrowDown')state.panY-=20;
+        draw();
+      }
+    });
     new ResizeObserver(resize).observe(wrap);
     const mq=window.matchMedia('(prefers-color-scheme: dark)');mq.addEventListener?.('change',()=>{readColors();draw();});
     const themeObserver=new MutationObserver(()=>{readColors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
