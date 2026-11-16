@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>防衛ゲーム — 横画面UIラフ</title>
+<title>防衛ゲーム — Lv1模擬襲撃</title>
 <style>
 :root{color-scheme:light dark;background:light-dark(#ffffff,#181818);--cursor-interaction:pointer}
 html,body{margin:0}
@@ -128,6 +128,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         <nav class="ad-shortcuts" aria-label="管理画面">
           <button type="button" class="cursor-interaction" data-go="research">研究</button>
           <button type="button" class="cursor-interaction" data-go="weapons">武器・防具</button>
+          <button type="button" class="cursor-interaction" data-raid>模擬襲撃</button>
         </nav>
       </div>
       <div class="ad-buildbar" data-buildbar hidden>
@@ -225,6 +226,183 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const state = {dungeonLevel:CONFIG.dungeonLevel,resources:{...CONFIG.initialResources},research:{extraction:0,storage:0},manaUpdatedAt:Date.now(),screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,nextStructureId:5,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,mining:{active:null,queue:[],completed:0},keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
     const deposits = [{x:0,y:1,job:false},{x:0,y:4,job:false},{x:2,y:0,job:false}];
     const structures = [{id:1,x:6,y:2,type:'well',level:1},{id:2,x:3,y:3,type:'archer',level:1},{id:3,x:5,y:4,type:'wall',level:1},{id:4,x:5,y:5,type:'wall',level:1}];
+    
+    // Lv1 combat test is ephemeral: no save-file changes, rewards or permanent destruction.
+    const raid={phase:'ready',time:0,next:0,plan:[],enemies:[],shots:[],hp:{},timers:{},used:new Set(),id:1};
+    const RAID_STATS={soldier:{name:'兵士',hp:68,speed:1.12,dmg:11,range:.75,cd:1.1},
+      archer:{name:'弓兵',hp:44,speed:.98,dmg:8,range:3.15,cd:1.55}};
+    const RAID_MAX={well:150,wall:90,archer:95,mage:75,trap:1};
+    const raidLive=()=>raid.phase==='active';
+    const raidHP=s=>raid.hp[s.id]??RAID_MAX[s.type]??1;
+    const raidOK=s=>s&&raidHP(s)>0;
+    const raidCore=()=>structures.find(s=>s.type==='well');
+    const raidDist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    function updateRaidButton(){
+      const b=q('[data-raid]');b.textContent=raidLive()?'防衛中':raid.phase==='ready'?'模擬襲撃':'再戦する';
+      b.disabled=raidLive();
+      qa('[data-mode]').forEach(x=>{x.disabled=raidLive();});
+    }
+    function raidFinish(value){
+      if(!raidLive())return;
+      raid.phase=value;updateRaidButton();
+      status(value==='win'?'防衛成功（報酬なし）':'中枢陥落（報酬なし）');draw();
+    }
+    function beginRaid(){
+      if(raidLive())return;
+      raid.phase='active';raid.time=0;raid.next=0;raid.enemies=[];raid.shots=[];raid.hp={};raid.timers={};raid.used=new Set();raid.id=1;
+      structures.forEach(s=>raid.hp[s.id]=RAID_MAX[s.type]??1);
+      // Pick two random invasion sides only on start; no fixed entrance shown beforehand.
+      const side=Math.floor(Math.random()*4),other=(side+1+Math.floor(Math.random()*3))%4;
+      raid.plan=[{at:0,type:'soldier',side},{at:1.8,type:'archer',side},
+        {at:4,type:'soldier',side:other},{at:5.6,type:'archer',side:other}];
+      state.mode='inspect';state.preview=null;updateMode();updateRaidButton();draw();
+    }
+    function spawnRaider(order){
+      const edge=[];const n=order.side<2?8:10;
+      for(let i=0;i<n;i++){
+        const p=order.side===0?{x:0,y:i}:order.side===1?{x:9,y:i}:
+          order.side===2?{x:i,y:0}:{x:i,y:7};
+        if(!structures.some(s=>s.x===p.x&&s.y===p.y&&s.type==='wall'&&raidOK(s)))edge.push(p);
+      }
+      const fallback=order.side===0?{x:0,y:3}:order.side===1?{x:9,y:3}:
+        order.side===2?{x:4,y:0}:{x:4,y:7};
+      const p=edge.length?edge[Math.floor(Math.random()*edge.length)]:fallback,def=RAID_STATS[order.type];
+      raid.enemies.push({id:raid.id++,type:order.type,x:p.x,y:p.y,hp:def.hp,max:def.hp,cool:.3,hit:0});
+    }
+    function getWall(x,y){return structures.find(s=>s.type==='wall'&&s.x===x&&s.y===y&&raidOK(s));}
+    function raidRoute(e,goal){
+      // Shortest 4-neighbour route; walls are expensive but breachable.
+      const start=Math.round(e.y)*10+Math.round(e.x),end=goal.y*10+goal.x;
+      if(start<0||start>=80||end<0||end>=80)return [];
+      const cost=Array(80).fill(Infinity),prev=Array(80).fill(-1),seen=new Set();cost[start]=0;
+      for(let loop=0;loop<80;loop++){
+        let u=-1,d=Infinity;
+        for(let i=0;i<80;i++)if(!seen.has(i)&&cost[i]<d){u=i;d=cost[i];}
+        if(u<0||u===end)break;seen.add(u);
+        const x=u%10,y=Math.floor(u/10);
+        for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=10||ny>=8)continue;
+          const v=ny*10+nx,wall=getWall(nx,ny),w=wall?7+raidHP(wall)/30:1;
+          if(d+w<cost[v]){cost[v]=d+w;prev[v]=u;}
+        }
+      }
+      if(!Number.isFinite(cost[end]))return [];
+      const result=[];let cur=end;
+      for(let i=0;i<81&&cur>=0;i++){result.unshift({x:cur%10,y:Math.floor(cur/10)});if(cur===start)break;cur=prev[cur];}
+      return result.length&&result[0].x===start%10&&result[0].y===Math.floor(start/10)?result:[];
+    }
+    function raidDamageBuilding(b,damage){
+      if(!raidOK(b))return;
+      raid.hp[b.id]=Math.max(0,raidHP(b)-damage);
+      if(b.type==='well'&&raid.hp[b.id]===0)raidFinish('loss');
+    }
+    function raidDamageEnemy(e,damage){if(e.hp>0){e.hp=Math.max(0,e.hp-damage);e.hit=.25;}}
+    function raidShoot(from,target,team,damage){
+      raid.shots.push({from:{x:from.x,y:from.y},target,team,damage,t:0,
+        duration:Math.max(.25,raidDist(from,target)*.13)});
+    }
+    function raidEnemyAct(e,dt){
+      if(e.hp<=0)return;
+      const info=RAID_STATS[e.type];e.cool=Math.max(0,e.cool-dt);e.hit=Math.max(0,e.hit-dt);
+      const core=raidCore();if(!raidOK(core))return;
+      let goal=core,target=null;
+      if(e.type==='archer'){
+        const towers=structures.filter(s=>['archer','mage'].includes(s.type)&&raidOK(s));
+        if(towers.length){towers.sort((a,b)=>raidDist(e,a)-raidDist(e,b));goal=towers[0];}
+        if(raidDist(e,goal)<=info.range)target=goal;
+      }else{
+        if(raidDist(e,core)<.77)target=core;
+        else target=structures.find(s=>s.type!=='trap'&&s.type!=='well'&&raidOK(s)&&raidDist(e,s)<.7)||null;
+      }
+      if(target){
+        if(e.cool<=0){if(e.type==='archer')raidShoot(e,target,'invader',info.dmg);
+          else raidDamageBuilding(target,info.dmg);e.cool=info.cd;}
+        return;
+      }
+      const route=raidRoute(e,goal);
+      if(route.length<2)return;
+      const next=route[1],wall=getWall(next.x,next.y);
+      if(wall){
+        if(e.cool<=0){if(e.type==='archer')raidShoot(e,wall,'invader',info.dmg);
+          else raidDamageBuilding(wall,info.dmg);e.cool=info.cd;}
+        return;
+      }
+      const dx=next.x-e.x,dy=next.y-e.y,d=Math.hypot(dx,dy);
+      if(d>0.001){const step=Math.min(d,info.speed*dt);e.x+=dx/d*step;e.y+=dy/d*step;}
+    }
+    function raidDefenseAct(dt){
+      for(const t of structures){
+        if(!['archer','mage'].includes(t.type)||!raidOK(t))continue;
+        raid.timers[t.id]=Math.max(0,(raid.timers[t.id]||0)-dt);
+        if(raid.timers[t.id]>0)continue;
+        const maxRange=t.type==='archer'?3.65:3.05;
+        const enemies=raid.enemies.filter(e=>e.hp>0&&raidDist(e,t)<=maxRange);
+        if(!enemies.length)continue;
+        enemies.sort((a,b)=>raidDist(a,raidCore())-raidDist(b,raidCore()));
+        raidShoot(t,enemies[0],t.type==='mage'?'amber':'defense',
+          t.type==='mage'?(t.level===2?33:24):(t.level===2?25:18));
+        raid.timers[t.id]=t.type==='mage'?1.4:.9;
+      }
+    }
+    function raidTrapAct(){
+      for(const trap of structures){
+        if(trap.type!=='trap'||raid.used.has(trap.id)||!raidOK(trap))continue;
+        const e=raid.enemies.find(x=>x.hp>0&&raidDist(x,trap)<.55);
+        if(e){raidDamageEnemy(e,trap.level===2?46:35);raid.used.add(trap.id);raid.hp[trap.id]=0;}
+      }
+    }
+    function advanceRaid(dt){
+      if(!raidLive()||document.hidden||!Number.isFinite(dt)||dt<=0)return;
+      dt=Math.min(.35,dt);raid.time+=dt;
+      while(raid.next<raid.plan.length&&raid.plan[raid.next].at<=raid.time)spawnRaider(raid.plan[raid.next++]);
+      for(const e of raid.enemies)raidEnemyAct(e,dt);
+      if(!raidLive())return;
+      raidDefenseAct(dt);
+      for(const s of raid.shots){
+        s.t+=dt/s.duration;
+        if(s.t>=1){if(s.team==='invader')raidDamageBuilding(s.target,s.damage);
+          else raidDamageEnemy(s.target,s.damage);}
+      }
+      raid.shots=raid.shots.filter(s=>s.t<1);
+      if(!raidLive())return;
+      raidTrapAct();
+      if(raid.next===raid.plan.length&&raid.enemies.every(e=>e.hp<=0)&&!raid.shots.some(s=>s.team==='defense'||s.team==='amber'))
+        raidFinish('win');
+      if(raidLive())status('防衛中　中枢 '+Math.ceil(raidHP(raidCore()))+'/150　敵 '+raid.enemies.filter(e=>e.hp>0).length+'体');
+      draw();
+    }
+    function drawRaider(e){
+      if(e.hp<=0)return;
+      const p=project(e.x,e.y),u=Math.max(9,tw*.45),x=p.x,y=p.y+Math.sin(raid.time*9+e.id)*1.3;
+      ctx.save();
+      ctx.fillStyle='#10141caa';ctx.beginPath();ctx.ellipse(x,y+2,u*.7,u*.25,0,0,6.283);ctx.fill();
+      ctx.fillStyle=e.hit>0?'#ffdfb6':'#8b3c46';
+      ctx.beginPath();ctx.moveTo(x-u*.4,y-u*.85);ctx.lineTo(x+u*.4,y-u*.85);ctx.lineTo(x+u*.5,y-u*.1);ctx.lineTo(x-u*.5,y-u*.1);ctx.fill();
+      ctx.fillStyle='#a8a6a0';ctx.beginPath();ctx.arc(x,y-u*1.35,u*.36,0,6.283);ctx.fill();
+      ctx.fillStyle='#505c6a';ctx.beginPath();ctx.moveTo(x-u*.5,y-u*1.5);ctx.lineTo(x,y-u*1.86);ctx.lineTo(x+u*.5,y-u*1.5);ctx.lineTo(x+u*.35,y-u*1.36);ctx.lineTo(x-u*.35,y-u*1.36);ctx.fill();
+      ctx.lineWidth=2.2;ctx.strokeStyle='#46505b';ctx.beginPath();ctx.moveTo(x-u*.22,y-u*.1);ctx.lineTo(x-u*.27,y+u*.5);ctx.moveTo(x+u*.22,y-u*.1);ctx.lineTo(x+u*.27,y+u*.5);ctx.stroke();
+      if(e.type==='soldier'){
+        ctx.fillStyle='#8794a3';ctx.beginPath();ctx.ellipse(x-u*.6,y-u*.74,u*.32,u*.48,0,0,6.283);ctx.fill();
+        ctx.strokeStyle='#cdd0d2';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x+u*.45,y-u*.7);ctx.lineTo(x+u*.83,y-u*1.82);ctx.stroke();
+      }else{
+        ctx.strokeStyle='#c5a378';ctx.lineWidth=2.3;ctx.beginPath();ctx.arc(x+u*.3,y-u*.94,u*.63,-1.57,1.57);ctx.stroke();
+        ctx.strokeStyle='#e5dcc7';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+u*.31,y-u*1.57);ctx.lineTo(x+u*.31,y-u*.31);ctx.stroke();
+      }
+      ctx.fillStyle='#25252b';ctx.fillRect(x-u*.64,y-u*2.12,u*1.28,3);
+      ctx.fillStyle='#d57878';ctx.fillRect(x-u*.64,y-u*2.12,u*1.28*e.hp/e.max,3);
+      ctx.restore();
+    }
+    function drawRaidShots(){
+      for(const s of raid.shots){
+        const a=project(s.from.x,s.from.y,tw*.5),b=project(s.target.x,s.target.y,tw*.32),p=Math.min(1,s.t);
+        const x=a.x+(b.x-a.x)*p,y=a.y+(b.y-a.y)*p;
+        ctx.save();ctx.strokeStyle=s.team==='amber'?'#ffbf4b':s.team==='invader'?'#de7272':'#d3dfed';ctx.lineWidth=2.2;
+        ctx.beginPath();ctx.moveTo(x-4,y-3);ctx.lineTo(x+3,y+2);ctx.stroke();
+        if(s.team==='amber'){ctx.fillStyle='#ffd787';ctx.shadowColor='#ffb842';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(x,y,3,0,6.283);ctx.fill();}
+        ctx.restore();
+      }
+    }
+
     let width=0,height=0,tw=0,th=0,ox=0,oy=0;
     let colors={};
     let hitRegions=[],miningHitRegions=[],paintTarget=null;
@@ -410,6 +588,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     }
     function handleVisibilityChange(now=Date.now(),monotonicNow=performance.now()){
       if(root.isConnected===false)return;
+      lastRaidTick=performance.now();
       if(Number.isFinite(monotonicNow)){lastMiningTick=monotonicNow;lastSaveTick=monotonicNow;}
       saveState(now);refreshResources();
       if(!document.hidden)draw();
@@ -428,7 +607,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         button.textContent=done?'研究済み':canAfford(COSTS.research[key])?'研究する':'資源不足';
       });
     }
-    function completeResearch(key,now=Date.now()){
+    function completeResearch(key,now=Date.now()){if(raidLive())return false;
       if(!validTimestamp(now))return false;
       // Settle elapsed mana using the old rate and old cap before either changes.
       settleMana(now);
@@ -466,10 +645,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       const cost=COSTS.upgrade[item.type];
       const affordable=canAfford(cost);
       q('[data-upgrade-cost]').textContent=capped?'最大 Lv'+CONFIG.maxFacilityLevel:formatCost(cost);
-      q('[data-upgrade]').disabled=capped||!affordable;
+      q('[data-upgrade]').disabled=raidLive()||capped||!affordable;
       q('[data-upgrade]').textContent=capped?'強化上限':affordable?'強化する':'資源不足';
     }
-    function upgradeSelected(now=Date.now()){
+    function upgradeSelected(now=Date.now()){if(raidLive())return false;
       const item=state.infoTarget;
       if(state.mode!=='inspect'||state.screen!=='main'||!item||item.type==='well'||state.infoSource==='hover'||!structures.includes(item)||item.level>=CONFIG.maxFacilityLevel)return false;
       if(!spendCost(COSTS.upgrade[item.type],now)){status('資源が不足しています');refreshResources();return false;}
@@ -479,7 +658,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       status('施設を強化しました');
       draw();return true;
     }
-    function buildSelected(now=Date.now()){
+    function buildSelected(now=Date.now()){if(raidLive())return false;
       const point=state.preview;
       if(state.mode!=='build'||!point||!validCell(point.x,point.y)){updateBuildControls();return false;}
       if(!spendCost(COSTS.build[state.kind],now)){status('資源が不足しています');refreshResources();return false;}
@@ -570,6 +749,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     function drawStructure(item,ghost=false){
       const {x,y,type}=item;const level=item.level||1,a=ghost?.55:1;
       paintTarget=null;
+      if(!ghost&&raid.phase!=='ready'&&!raidOK(item)){drawSprite('rock',x,y,{factor:.52,alpha:.52});return;}
       if(drawSprite(type,x,y,{alpha:a,target:ghost?null:item,footprint:true}))return;
       paintTarget=ghost?null:item;
       ctx.save();ctx.globalAlpha=a;
@@ -710,10 +890,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       const sorted=[
         ...structures.map(item=>({depth:item.x+item.y,paint:()=>drawStructure(item)})),
         ...deposits.map(item=>({depth:item.x+item.y,paint:()=>drawDeposit(item)})),
-        {depth:kobold.x+kobold.y,paint:drawKobold}
+        {depth:kobold.x+kobold.y,paint:drawKobold},
+        ...raid.enemies.filter(e=>e.hp>0).map(e=>({depth:e.x+e.y+.05,paint:()=>drawRaider(e)}))
       ].sort((a,b)=>a.depth-b.depth);
       sorted.forEach(item=>item.paint());
-      drawCaveProps(true);drawMiningIndicators();
+      drawCaveProps(true);drawMiningIndicators();drawRaidShots();
       if(state.preview&&state.mode==='build'){const p=state.preview;diamond(p.x,p.y,colors['amber-bg'],0,.98,colors.amber);drawStructure({x:p.x,y:p.y,type:state.kind,level:1},true);}
       drawInspection();
     }
@@ -753,13 +934,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       if(previousActive!==state.mining.active?.index)lastMiningTick=performance.now();
       saveState(now);refreshResources();draw();return true;
     }
-    function mapAction(clientX,clientY,pointerType='mouse'){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
+    function mapAction(clientX,clientY,pointerType='mouse'){if(raidLive())return;const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
       if(state.mode==='build')previewCell(x,y);
       else if(state.mode==='mine'){const deposit=hitRegionList(miningHitRegions,px,py,pointerType==='touch'),index=deposits.indexOf(deposit);if(index>=0)markDeposit(index);else status('鉱床を選んで掘削を指定');}
       else inspectPointer(clientX,clientY,'tap',pointerType==='touch');
     }
-    qa('[data-go]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.go)));
-    qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
+    qa('[data-go]').forEach(b=>b.addEventListener('click',()=>{if(!raidLive())setScreen(b.dataset.go);}));
+    q('[data-raid]').addEventListener('click',beginRaid);
+    qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{if(raidLive())return;state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
     qa('[data-kind]').forEach(b=>b.addEventListener('click',()=>{if(!COSTS.build[b.dataset.kind])return;state.kind=b.dataset.kind;qa('[data-kind]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));updateBuildControls();draw();}));
     q('[data-cancel]').addEventListener('click',()=>{state.preview=null;updateBuildControls();status('空きマスを選択');draw();});
     q('[data-confirm]').addEventListener('click',()=>buildSelected());
@@ -848,11 +1030,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const themeObserver=new MutationObserver(()=>{readColors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
     const bootNow=Date.now();
     if(!loadState(bootNow))saveState(bootNow);
-    status('外観を読み込み中');refreshResources();resize();
+    status('外観を読み込み中');refreshResources();updateRaidButton();resize();
     const assetReadyPromise=loadSpriteImages();
+    let lastRaidTick=performance.now();
     const economyTimer=window.setInterval(()=>{
       if(root.isConnected===false){window.clearInterval(economyTimer);return;}
       tickEconomy();
+      const raidNow=performance.now();advanceRaid(Math.max(0,(raidNow-lastRaidTick)/1000));lastRaidTick=raidNow;
     },250);
     document.addEventListener('visibilitychange',()=>handleVisibilityChange());
     window.addEventListener('focus',()=>handleVisibilityChange());
