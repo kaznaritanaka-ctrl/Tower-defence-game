@@ -1,0 +1,209 @@
+{
+  "camera": {
+    "elevationDegrees": 28.034296534881282,
+    "thOverTw": 0.47
+  },
+  "sprites": {
+    "floor": {
+      "file": "floor.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        112,
+        244,
+        272,
+        329
+      ]
+    },
+    "wall": {
+      "file": "wall.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        140,
+        196,
+        244,
+        306
+      ]
+    },
+    "archer": {
+      "file": "archer.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        115,
+        65,
+        269,
+        316
+      ]
+    },
+    "well": {
+      "file": "well.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        116,
+        182,
+        268,
+        318
+      ]
+    },
+    "deposit": {
+      "file": "deposit.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        131,
+        195,
+        253,
+        307
+      ]
+    },
+    "kobold": {
+      "file": "kobold.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        166,
+        194,
+        225,
+        288
+      ]
+    },
+    "mage": {
+      "file": "mage.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        115,
+        72,
+        269,
+        316
+      ]
+    },
+    "trap": {
+      "file": "trap.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        140,
+        244,
+        244,
+        305
+      ]
+    },
+    "rock": {
+      "file": "rock.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        131,
+        131,
+        253,
+        307
+      ]
+    },
+    "torch": {
+      "file": "torch.png",
+      "width": 384,
+      "height": 384,
+      "anchor": [
+        191.9999,
+        281.7203
+      ],
+      "referenceTw": 79.8615,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitBounds": [
+        176,
+        211,
+        208,
+        282
+      ]
+    }
+  },
+  "notes": "Actual KayKit meshes rendered with Blender; original kobold, elf ears, mana crystal and structural additions."
+}
