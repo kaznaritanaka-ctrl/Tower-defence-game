@@ -9,3 +9,10 @@
 補助アセット候補： [KayKit Skeletons](https://kaylousberg.itch.io/kaykit-skeletons)（CC0の剣士・射手等）、[Kenney Modular Dungeon Kit](https://kenney.nl/assets/modular-dungeon-kit)（CC0）、[Cryptstone Dungeon Kit](https://elliottfhotmailfr.itch.io/cryptstone-dungeon-kit)（CC0）、[Dreadhollow](https://leeman69.itch.io/dreadhollow-300-dark-fantasy-low-poly-3d-assets)（独自商用ライセンス、素材の再配布制限あり）。
 
 実装は試験用であり、戦闘で資源・資金を獲得せず、ダメージはゲーム保存に反映しない。経路上の他施設の厳密な衝突、敵同士の衝突、完全な射線遮蔽、敵AI戦術、全体魔法、正式なGodotプロジェクトは未実装。スマホ実機・実ブラウザでの戦闘統合テストはこれからである。Lv1の毎時6・魔力上限70と研究・保存処理は変更していない。
+
+## 現行仕様との関係（2026-11-17追記）
+
+この模擬襲撃は[全体設計](OVERALL_DESIGN.md)を決める前に作った。現行仕様と一致する点と異なる点は次のとおり。
+
+- 一致する点：出現位置を開始時に抽選し予告しないこと、防壁を高コストの通行障害として扱い完全封鎖時は壊して進むこと、中枢の破壊で敗北すること。中枢は現行仕様のダンジョンコア（魔力タンク）に当たる。
+- 異なる点：盤面が10×8であること（現行は初期7×7程度）、配下への移動指示と全体魔法がないこと、戦闘中に魔力が湧かないこと、wave の解禁・資金の報酬・資材の獲得がないこと、開始前に編成と方向の数を表示しないこと。
