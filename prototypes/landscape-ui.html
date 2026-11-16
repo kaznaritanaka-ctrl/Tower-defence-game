@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>防衛ゲーム — 横画面UIラフ</title>
+<style>
+:root{color-scheme:light dark;background:light-dark(#ffffff,#181818);--cursor-interaction:pointer}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:22.75px;font-weight:400;-webkit-font-smoothing:antialiased}
+.cursor-interaction{cursor:var(--cursor-interaction,pointer)}
+h2{line-height:1.4}
+h3{line-height:1.5555555556}
+#amber-dungeon-ui.viz-dotted-background{background-image:radial-gradient(circle,light-dark(#1a1c1f24,#ffffff24) .8px,transparent .8px);background-position:center;background-size:16px 16px}
+#amber-dungeon-ui .ad-icon{display:block;flex-shrink:0}
+</style>
+</head>
+<body>
+<!--
+Standalone export from amber-dungeon-layout.html using visualize/scripts/render.py.
+Unused iframe host bridge, state persistence, tooltip/carousel runtime and CDN scripts
+were removed. The original product CSS and interaction script remain inline.
+Four decorative Lucide icon definitions are embedded from the installed lucide 1.8.0
+package. The package's complete license is preserved in LICENSE.lucide beside this
+file. No network or host API is needed to display or operate this prototype.
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<div id="amber-dungeon-ui" class="viz-dotted-background">
+  <style>
+    #amber-dungeon-ui{--ad-bg:light-dark(#ddd7c7,#151c26);--ad-panel:light-dark(#f5efdf,#27313d);--ad-panel-2:light-dark(#e8deca,#35404c);--ad-ink:light-dark(#292b32,#f1eee7);--ad-sub:light-dark(#5b5b60,#bdc3c9);--ad-line:light-dark(#b9af9b,#52606c);--ad-amber:light-dark(#a76513,#ffc469);--ad-amber-bg:light-dark(#f7d89d,#6e4c24);--ad-tile:light-dark(#b6b5aa,#424b53);--ad-tile-alt:light-dark(#aaa99e,#3b444e);--ad-edge:light-dark(#8b8e87,#29333e);--ad-stone:light-dark(#bab6aa,#7b8790);--ad-stone-dark:light-dark(#85887f,#515d68);--ad-stone-light:light-dark(#d6d1c3,#a2adb3);--ad-green:light-dark(#28715c,#8ed0aa);--ad-red:light-dark(#a84438,#f0a09a);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);padding:12px 0;box-sizing:border-box}
+    #amber-dungeon-ui *{box-sizing:border-box}
+    #amber-dungeon-ui [hidden]{display:none!important}
+    #amber-dungeon-ui button{font:inherit;min-height:44px;color:var(--ad-ink);background:var(--ad-panel);border:1px solid var(--ad-line);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500;touch-action:manipulation}
+    #amber-dungeon-ui button:disabled{opacity:.45}
+    #amber-dungeon-ui button[aria-pressed="true"],#amber-dungeon-ui .ad-primary{color:var(--ad-ink);background:var(--ad-amber-bg);border-color:var(--ad-amber)}
+    #amber-dungeon-ui .ad-device{position:relative;width:100%;max-width:900px;margin:0 auto;border:1px solid var(--ad-line);border-radius:19px;background:var(--ad-bg);box-shadow:0 12px 30px #00000014;overflow:hidden}
+    #amber-dungeon-ui .ad-top{position:absolute;left:12px;right:12px;top:10px;z-index:4;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;pointer-events:none}
+    #amber-dungeon-ui .ad-resources{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    #amber-dungeon-ui .ad-resource{display:flex;gap:5px;align-items:center;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;background:var(--ad-panel-2);border-radius:7px;padding:6px 8px}
+    #amber-dungeon-ui .ad-resource b{font-weight:500;font-size:13px}
+    #amber-dungeon-ui .ad-main{position:relative}
+    #amber-dungeon-ui .ad-map-wrap{height:376px;position:relative;background:var(--ad-bg)}
+    #amber-dungeon-ui .ad-map-input{position:absolute;inset:0;border:0;border-radius:0;background:transparent;padding:0;width:100%;height:100%;overflow:hidden;touch-action:none;cursor:grab}
+    #amber-dungeon-ui .ad-map-input:active{cursor:grabbing}
+    #amber-dungeon-ui canvas{width:100%;height:100%;display:block}
+    #amber-dungeon-ui .ad-shortcuts{position:absolute;right:12px;top:67px;display:grid;gap:7px}
+    #amber-dungeon-ui .ad-shortcuts button{min-width:74px;background:var(--ad-panel)}
+    #amber-dungeon-ui .ad-main>[data-mode]{position:absolute;bottom:12px;z-index:3;min-width:100px;box-shadow:0 3px 10px #00000018}
+    #amber-dungeon-ui .ad-main>[data-mode="mine"]{left:12px}
+    #amber-dungeon-ui .ad-main>[data-mode="build"]{right:12px}
+    #amber-dungeon-ui .ad-buildbar{position:absolute;right:12px;bottom:66px;width:248px;max-width:calc(100% - 24px);z-index:3;padding:8px;display:grid;gap:6px;background:var(--ad-panel-2);border:1px solid var(--ad-line);border-radius:12px;box-shadow:0 6px 18px #00000020}
+    #amber-dungeon-ui .ad-buildbar .ad-categories{display:flex;gap:5px}
+    #amber-dungeon-ui .ad-buildbar button{flex:1;min-width:0;padding:7px 8px}
+    #amber-dungeon-ui .ad-buildbar .ad-confirm{display:flex;gap:5px}
+    #amber-dungeon-ui .ad-cost{font-size:11px;color:var(--ad-sub);padding:0 3px}
+    #amber-dungeon-ui .ad-status{min-width:0;max-width:50%;font-size:12px;color:var(--ad-sub);line-height:1.4;background:var(--ad-panel);padding:6px 9px;border-radius:7px}
+    #amber-dungeon-ui .ad-screen{background:var(--ad-bg);padding:66px 12px 12px;min-height:376px}
+    #amber-dungeon-ui .ad-screen-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    #amber-dungeon-ui .ad-screen-head h2{margin:0;font-size:17px;font-weight:500}
+    #amber-dungeon-ui .ad-screen-head span{font-size:12px;color:var(--ad-sub)}
+    #amber-dungeon-ui .ad-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    #amber-dungeon-ui .ad-option{padding:14px;background:var(--ad-panel);border-radius:11px;min-width:0;display:flex;flex-direction:column;gap:10px}
+    #amber-dungeon-ui .ad-option h3{font-size:15px;font-weight:500;margin:0}
+    #amber-dungeon-ui .ad-option p{font-size:13px;line-height:1.5;margin:0;color:var(--ad-sub)}
+    #amber-dungeon-ui .ad-option .ad-symbol{height:37px;color:var(--ad-amber);display:flex;align-items:center;gap:9px}
+    #amber-dungeon-ui .ad-option button{margin-top:auto;width:100%}
+    #amber-dungeon-ui .ad-option .ad-symbol span{font-size:12px;color:var(--ad-sub)}
+    #amber-dungeon-ui .ad-weapon-tabs{display:flex;gap:6px;margin-left:auto}
+    #amber-dungeon-ui .ad-weapon-tabs button{min-width:58px}
+    @media(max-width:520px){
+      #amber-dungeon-ui .ad-top{left:8px;right:8px;top:8px;gap:5px}
+      #amber-dungeon-ui .ad-resources{gap:4px}
+      #amber-dungeon-ui .ad-resource{font-size:11px;padding:5px;gap:3px}
+      #amber-dungeon-ui .ad-resource b{font-size:12px}
+      #amber-dungeon-ui .ad-map-wrap{height:440px}
+      #amber-dungeon-ui .ad-shortcuts{right:8px;top:84px;gap:5px}
+      #amber-dungeon-ui .ad-shortcuts button{min-width:62px;font-size:12px;padding:6px}
+      #amber-dungeon-ui .ad-status{font-size:11px;padding:5px 6px;flex:1;max-width:none;overflow-wrap:anywhere}
+      #amber-dungeon-ui .ad-buildbar{right:8px;max-width:calc(100% - 16px)}
+      #amber-dungeon-ui .ad-main>[data-mode="mine"]{left:8px}
+      #amber-dungeon-ui .ad-main>[data-mode="build"]{right:8px}
+      #amber-dungeon-ui .ad-screen-head{flex-wrap:wrap}
+      #amber-dungeon-ui .ad-screen-head h2{font-size:15px}
+      #amber-dungeon-ui .ad-options{grid-template-columns:1fr}
+      #amber-dungeon-ui .ad-screen{padding:88px 10px 10px;min-height:440px}
+      #amber-dungeon-ui .ad-weapon-tabs{width:100%;margin-left:0}
+      #amber-dungeon-ui .ad-weapon-tabs button{flex:1}
+    }
+  </style>
+  <div class="ad-device">
+    <header class="ad-top">
+      <div class="ad-resources" aria-label="保有資源">
+        <span class="ad-resource">石材 <b data-stone>240</b></span>
+        <span class="ad-resource">鉱石 <b data-ore>120</b></span>
+        <span class="ad-resource">魔力 <b>80</b></span>
+      </div>
+      <span class="ad-status" data-status aria-live="polite">準備中</span>
+    </header>
+    <section class="ad-main" data-screen="main" aria-label="拠点のメイン画面">
+      <div class="ad-map-wrap">
+          <button type="button" class="ad-map-input" aria-label="地下拠点。掘削または配置を選んで盤面を操作。矢印キーで候補を選び、掘削はEnter、施設は配置するボタンで決定。">
+          <canvas aria-label="四角形のマスを斜めから見た拠点。外周の鉱床と、中心の防壁・兵器・罠を配置した区域。">地下拠点の配置図</canvas>
+        </button>
+        <nav class="ad-shortcuts" aria-label="管理画面">
+          <button type="button" class="cursor-interaction" data-go="research">研究</button>
+          <button type="button" class="cursor-interaction" data-go="weapons">武器・防具</button>
+        </nav>
+      </div>
+      <div class="ad-buildbar" data-buildbar hidden>
+        <div class="ad-categories" aria-label="配置するもの">
+          <button type="button" class="cursor-interaction" data-kind="wall" aria-pressed="true">防壁</button>
+          <button type="button" class="cursor-interaction" data-kind="turret" aria-pressed="false">兵器</button>
+          <button type="button" class="cursor-interaction" data-kind="trap" aria-pressed="false">罠</button>
+        </div>
+        <span class="ad-cost" data-cost>石材 20</span>
+        <div class="ad-confirm">
+          <button type="button" class="cursor-interaction" data-cancel>取消</button>
+          <button type="button" class="ad-primary cursor-interaction" data-confirm disabled>配置する</button>
+        </div>
+      </div>
+      <button type="button" class="cursor-interaction" data-mode="mine" aria-pressed="false">掘削</button>
+      <button type="button" class="ad-primary cursor-interaction" data-mode="build" aria-pressed="false">施設配置</button>
+    </section>
+    <section class="ad-screen" data-screen="research" aria-label="研究画面" hidden>
+      <div class="ad-screen-head">
+        <button type="button" class="cursor-interaction" data-go="main">← 拠点へ</button>
+        <h2>研究</h2><span>魔王</span>
+      </div>
+      <div class="ad-options">
+        <article class="ad-option">
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg><span>装備技術</span></div>
+          <h3>鍛造理論 I</h3><p>ドワーフが改良できる武器・防具を増やす。</p>
+          <button type="button" class="cursor-interaction" data-research="鍛造理論 I">研究を指定</button>
+        </article>
+        <article class="ad-option">
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg><span>全体魔法</span></div>
+          <h3>琥珀の結界</h3><p>配下全体を守る結界魔法を習得する。</p>
+          <button type="button" class="cursor-interaction" data-research="琥珀の結界">研究を指定</button>
+        </article>
+      </div>
+    </section>
+    <section class="ad-screen" data-screen="weapons" aria-label="武器防具画面" hidden>
+      <div class="ad-screen-head">
+        <button type="button" class="cursor-interaction" data-go="main">← 拠点へ</button>
+        <h2>武器・防具</h2><span>ドワーフ</span>
+        <div class="ad-weapon-tabs" aria-label="工房の仕事">
+          <button type="button" class="cursor-interaction" data-work="craft" aria-pressed="true">製造</button>
+          <button type="button" class="cursor-interaction" data-work="upgrade" aria-pressed="false">改良</button>
+        </div>
+      </div>
+      <div class="ad-options">
+        <article class="ad-option">
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="m11 19-6-6"></path><path d="m5 21-2-2"></path><path d="m8 16-4 4"></path><path d="M9.5 17.5 21 6V3h-3L6.5 14.5"></path></svg><span>武器</span></div>
+          <h3 data-item-name="sword">鉄の剣</h3><p data-item-detail="sword">配下の近接攻撃用。</p>
+          <button type="button" class="cursor-interaction" data-weapon="鉄の剣">製造を指示</button>
+        </article>
+        <article class="ad-option">
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="M12 22V2"></path></svg><span>防具</span></div>
+          <h3 data-item-name="armor">鉄の鎧</h3><p data-item-detail="armor">前衛の防御用。</p>
+          <button type="button" class="cursor-interaction" data-weapon="鉄の鎧">製造を指示</button>
+        </article>
+      </div>
+    </section>
+  </div>
+  <script>
+  (() => {
+    const root = document.getElementById('amber-dungeon-ui');
+    const q = s => root.querySelector(s);
+    const qa = s => [...root.querySelectorAll(s)];
+    const canvas = q('canvas');
+    const ctx = canvas.getContext('2d');
+    const mapButton = q('.ad-map-input');
+    const wrap = q('.ad-map-wrap');
+    const names = {wall:'防壁',turret:'兵器',trap:'罠'};
+    const prices = {wall:[20,0],turret:[50,20],trap:[0,20]};
+    const state = {screen:'main',mode:'inspect',kind:'wall',preview:null,stone:240,ore:120,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
+    const deposits = [{x:0,y:1,job:false},{x:0,y:4,job:false},{x:2,y:0,job:false}];
+    const structures = [{x:7,y:2,type:'core'},{x:6,y:0,type:'research'},{x:8,y:5,type:'forge'},{x:4,y:2,type:'turret'},{x:4,y:6,type:'turret'},{x:3,y:4,type:'trap'},...[[2,1],[2,2],[2,5],[2,6],[3,1],[4,1],[5,1],[6,6]].map(([x,y])=>({x,y,type:'wall'}))];
+    let width=0,height=0,tw=0,th=0,ox=0,oy=0;
+    let colors={};
+    const readColors = () => {
+      const probe = document.createElement('span');
+      probe.hidden = true;root.appendChild(probe);
+      ['bg','panel','panel-2','ink','sub','line','amber','amber-bg','tile','tile-alt','edge','stone','stone-dark','stone-light','green','red'].forEach(k=>{probe.style.color='var(--ad-'+k+')';colors[k]=getComputedStyle(probe).color;});
+      probe.remove();
+    };
+    function project(x,y,z=0){return{x:ox+(x-y)*tw,y:oy+(x+y)*th-z};}
+    function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();}}
+    function diamond(x,y,fill,z=0,scale=1,stroke){const c=project(x,y,z);polygon([{x:c.x,y:c.y-th*scale},{x:c.x+tw*scale,y:c.y},{x:c.x,y:c.y+th*scale},{x:c.x-tw*scale,y:c.y}],fill,stroke);}
+    function block(x,y,h,scale,top,left,right,alpha=1){ctx.save();ctx.globalAlpha=alpha;const c=project(x,y),s=scale;const t=[{x:c.x,y:c.y-th*s-h},{x:c.x+tw*s,y:c.y-h},{x:c.x,y:c.y+th*s-h},{x:c.x-tw*s,y:c.y-h}];polygon([t[3],t[2],{x:t[2].x,y:t[2].y+h},{x:t[3].x,y:t[3].y+h}],left);polygon([t[2],t[1],{x:t[1].x,y:t[1].y+h},{x:t[2].x,y:t[2].y+h}],right);polygon(t,top);ctx.restore();}
+    function label(x,y,text,color=colors.ink){ctx.font='500 12px system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const w=ctx.measureText(text).width+12;ctx.fillStyle=colors.panel;ctx.beginPath();ctx.roundRect(x-w/2,y-10,w,20,5);ctx.fill();ctx.fillStyle=color;ctx.fillText(text,x,y);}
+    function drawStructure(item,ghost=false){
+      const {x,y,type}=item;const p=project(x,y),a=ghost?.55:1;
+      if(type==='wall')block(x,y,tw*.7,.8,colors['stone-light'],colors.stone,colors['stone-dark'],a);
+      else if(type==='turret'){block(x,y,tw*.65,.78,colors['stone-light'],colors.stone,colors['stone-dark'],a);block(x,y,tw*1.1,.28,colors.amber,colors['amber-bg'],colors['stone-dark'],a);}
+      else if(type==='trap'){ctx.save();ctx.globalAlpha=a;diamond(x,y,colors['stone-dark'],0,.73);const c=project(x,y);ctx.strokeStyle=colors.amber;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-tw*.35,c.y-th*.3);ctx.lineTo(c.x+tw*.35,c.y+th*.3);ctx.moveTo(c.x+tw*.35,c.y-th*.3);ctx.lineTo(c.x-tw*.35,c.y+th*.3);ctx.stroke();ctx.restore();}
+      else if(type==='core'){block(x,y,tw*.4,1.1,colors['stone-light'],colors.stone,colors['stone-dark']);const c=project(x,y,tw*.45);ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=16;polygon([{x:c.x,y:c.y-tw*1.35},{x:c.x+tw*.38,y:c.y-tw*.55},{x:c.x,y:c.y},{x:c.x-tw*.38,y:c.y-tw*.55}],colors.amber);ctx.restore();label(p.x,p.y+th+12,'魔力核');}
+      else if(type==='research'){block(x,y,tw*.8,.88,colors['stone-light'],colors.stone,colors['stone-dark']);diamond(x,y,colors['amber-bg'],tw*.8,.88);label(p.x,p.y-tw*1.0-14,'研究室');}
+      else if(type==='forge'){block(x,y,tw*.65,.95,colors['stone-light'],colors.stone,colors['stone-dark']);block(x,y,tw*.9,.35,colors.amber,colors['amber-bg'],colors['stone-dark']);label(p.x,p.y+th+11,'工房');}
+    }
+    function draw(){
+      if(!width||state.screen!=='main')return;
+      ctx.clearRect(0,0,width,height);ctx.fillStyle=colors.bg;ctx.fillRect(0,0,width,height);
+      tw=Math.min((width-36)/18,(height-124)/8.3)*state.zoom;th=tw*.47;
+      ox=width*.46+state.panX;oy=90+state.panY;
+      for(let d=0;d<17;d++)for(let x=0;x<10;x++){const y=d-x;if(y<0||y>7)continue;diamond(x,y,(x+y)%2?colors['tile-alt']:colors.tile,0,1,colors.edge);}
+      for(let i=0;i<deposits.length;i++){const dep=deposits[i],p=project(dep.x,dep.y);block(dep.x,dep.y,tw*.8,.9,colors.stone,colors['stone-dark'],colors.edge);block(dep.x+.17,dep.y-.04,tw*1.0,.32,colors['stone-light'],colors.stone,colors['stone-dark']);if(state.mode==='mine'||dep.job){ctx.strokeStyle=dep.job?colors.amber:colors.green;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,tw*.94,th*.94,0,0,Math.PI*2);ctx.stroke();label(p.x,p.y-tw-11,dep.job?'掘削予定':'鉱床',dep.job?colors.amber:colors.ink);}}
+      const sorted=[...structures].sort((a,b)=>(a.x+a.y)-(b.x+b.y));sorted.forEach(s=>drawStructure(s));
+      const defender=project(4.7,4.3);ctx.fillStyle=colors['stone-dark'];ctx.beginPath();ctx.ellipse(defender.x,defender.y+5,8,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=colors.green;ctx.beginPath();ctx.arc(defender.x,defender.y-8,5,0,Math.PI*2);ctx.fill();ctx.fillRect(defender.x-5,defender.y-3,10,12);label(defender.x+30,defender.y-11,'守備隊');
+      const entry=project(0,7);label(entry.x,entry.y+20,'侵入口',colors.red);
+      if(state.preview&&state.mode==='build'){const p=state.preview;diamond(p.x,p.y,colors['amber-bg'],0,.98,colors.amber);drawStructure({x:p.x,y:p.y,type:state.kind},true);}
+    }
+    function resize(){const r=wrap.getBoundingClientRect();if(!r.width)return;width=r.width;height=r.height;const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);readColors();draw();}
+    const status = (text,screen='main') => {state.messages[screen]=text;if(state.screen===screen)q('[data-status]').textContent=text;};
+    function setScreen(name){const focusButton=name==='main'?q('[data-go="'+state.screen+'"]'):q('[data-screen="'+name+'"]').querySelector('[data-go="main"]');state.screen=name;qa('[data-screen]').forEach(el=>{el.hidden=el.dataset.screen!==name;});q('[data-status]').textContent=state.messages[name];requestAnimationFrame(()=>{if(name==='main')resize();focusButton?.focus({preventScroll:true});});}
+    function refreshResources(){q('[data-stone]').textContent=state.stone;q('[data-ore]').textContent=state.ore;}
+    function updateMode(){
+      qa('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
+      q('[data-buildbar]').hidden=state.mode!=='build';
+      q('[data-mode="build"]').textContent=state.mode==='build'?'配置終了':'施設配置';
+      q('[data-mode="mine"]').textContent=state.mode==='mine'?'掘削終了':'掘削';
+      q('[data-confirm]').disabled=!state.preview;
+      draw();
+    }
+    function validCell(x,y){return x>=0&&x<10&&y>=0&&y<8&&!(x===0&&y===7)&&!structures.some(s=>s.x===x&&s.y===y)&&!deposits.some(d=>d.x===x&&d.y===y);}
+    function previewCell(x,y){state.keyboard={x,y};if(validCell(x,y)){state.preview={x,y};q('[data-confirm]').disabled=false;status(names[state.kind]+'の位置を確認');}else{state.preview=null;q('[data-confirm]').disabled=true;status('空いているマスを選択');}draw();}
+    function markDeposit(index){deposits[index].job=!deposits[index].job;state.mineIndex=index;const n=deposits.filter(d=>d.job).length;status(n?'コボルドの掘削予定 '+n+'か所':'鉱床を選択');draw();}
+    function mapAction(clientX,clientY){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
+      if(state.mode==='build')previewCell(x,y);
+      else if(state.mode==='mine'){let best=-1,dist=Infinity;deposits.forEach((d,i)=>{const p=project(d.x,d.y,tw*.3);const v=Math.hypot(p.x-px,p.y-py);if(v<dist){dist=v;best=i;}});if(best>=0&&dist<Math.max(28,tw*1.4))markDeposit(best);else status('鉱床を選んで掘削を指定');}
+      else {const item=structures.find(s=>s.x===x&&s.y===y);if(item?.type==='research')setScreen('research');else if(item?.type==='forge')setScreen('weapons');}
+    }
+    qa('[data-go]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.go)));
+    qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
+    qa('[data-kind]').forEach(b=>b.addEventListener('click',()=>{state.kind=b.dataset.kind;qa('[data-kind]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const p=prices[state.kind];q('[data-cost]').textContent=[p[0]?'石材 '+p[0]:'',p[1]?'鉱石 '+p[1]:''].filter(Boolean).join(' / ');draw();}));
+    q('[data-cancel]').addEventListener('click',()=>{state.preview=null;q('[data-confirm]').disabled=true;status('空きマスを選択');draw();});
+    q('[data-confirm]').addEventListener('click',()=>{if(!state.preview)return;const [s,o]=prices[state.kind];if(state.stone<s||state.ore<o){status('資源が不足しています');return;}structures.push({...state.preview,type:state.kind});state.stone-=s;state.ore-=o;state.preview=null;refreshResources();q('[data-confirm]').disabled=true;status(names[state.kind]+'を配置。続けて配置できます');draw();});
+    qa('[data-research]').forEach(b=>b.addEventListener('click',()=>{qa('[data-research]').forEach(k=>{k.textContent=k===b?'研究に指定済み':'研究を指定';k.setAttribute('aria-pressed',String(k===b));});status('魔王の研究：'+b.dataset.research,'research');}));
+    qa('[data-work]').forEach(b=>b.addEventListener('click',()=>{state.work=b.dataset.work;qa('[data-work]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const up=state.work==='upgrade';q('[data-item-name="sword"]').textContent=up?'鉄の剣 I → II':'鉄の剣';q('[data-item-name="armor"]').textContent=up?'鉄の鎧 I → II':'鉄の鎧';q('[data-item-detail="sword"]').textContent=up?'既存の武器を強化する。':'配下の近接攻撃用。';q('[data-item-detail="armor"]').textContent=up?'既存の防具を強化する。':'前衛の防御用。';qa('[data-weapon]').forEach(k=>k.textContent=up?'改良を指示':'製造を指示');}));
+    qa('[data-weapon]').forEach(b=>b.addEventListener('click',()=>{state.orders++;status(b.dataset.weapon+'の'+(state.work==='upgrade'?'改良':'製造')+'を予約 ／ 工房 '+state.orders+'件','weapons');}));
+    let start=null;const pointers=new Map();let pinch=null;
+    mapButton.addEventListener('pointerdown',e=>{mapButton.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});start={x:e.clientX,y:e.clientY,panX:state.panX,panY:state.panY,moved:false};if(pointers.size===2){const a=[...pointers.values()];pinch={distance:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),zoom:state.zoom};}});
+    mapButton.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2&&pinch){const a=[...pointers.values()];state.zoom=Math.max(.8,Math.min(1.8,pinch.zoom*Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)/Math.max(1,pinch.distance)));if(start)start.moved=true;draw();return;}if(start){const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.hypot(dx,dy)>7)start.moved=true;if(start.moved){state.panX=start.panX+dx;state.panY=start.panY+dy;draw();}}});
+    mapButton.addEventListener('pointerup',e=>{const act=start&&!start.moved&&!pinch;pointers.delete(e.pointerId);if(act)mapAction(e.clientX,e.clientY);if(!pointers.size){start=null;pinch=null;}});
+    mapButton.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);start=null;pinch=null;});
+    mapButton.addEventListener('click',e=>e.preventDefault());
+    mapButton.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(.8,Math.min(1.8,state.zoom-e.deltaY*.001));draw();},{passive:false});
+    mapButton.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter',' '].includes(e.key))return;e.preventDefault();if(state.mode==='build'){let{x,y}=state.keyboard;if(e.key==='ArrowLeft')x--;if(e.key==='ArrowRight')x++;if(e.key==='ArrowUp')y--;if(e.key==='ArrowDown')y++;previewCell(Math.max(0,Math.min(9,x)),Math.max(0,Math.min(7,y)));}else if(state.mode==='mine'){if(e.key==='Enter'||e.key===' ')markDeposit(state.mineIndex);else{state.mineIndex=(state.mineIndex+(e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)+deposits.length)%deposits.length;status('鉱床 '+(state.mineIndex+1)+' を選択。Enterで掘削指定');}}else{if(e.key==='ArrowLeft')state.panX+=20;if(e.key==='ArrowRight')state.panX-=20;if(e.key==='ArrowUp')state.panY+=20;if(e.key==='ArrowDown')state.panY-=20;draw();}});
+    new ResizeObserver(resize).observe(wrap);
+    const mq=window.matchMedia('(prefers-color-scheme: dark)');mq.addEventListener?.('change',()=>{readColors();draw();});
+    const themeObserver=new MutationObserver(()=>{readColors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
+    resize();
+  })();
+  </script>
+</div>
+
+</body>
+</html>
