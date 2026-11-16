@@ -20,7 +20,7 @@ h3{line-height:1.5555555556}
 <body>
 <!--
 Standalone export from amber-dungeon-layout.html using visualize/scripts/render.py.
-Unused iframe host bridge, state persistence, tooltip/carousel runtime and CDN scripts
+Unused iframe host bridge, host-state persistence, tooltip/carousel runtime and CDN scripts
 were removed. The original product CSS and interaction script remain inline.
 Four decorative Lucide icon definitions are embedded from the installed lucide 1.8.0
 package. The package's complete license is preserved in LICENSE.lucide beside this
@@ -113,7 +113,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
   <div class="ad-device">
     <header class="ad-top">
       <div class="ad-resources" aria-label="保有資源">
-        <span class="ad-resource">魔力 <b data-mana>20/100</b></span>
+        <span class="ad-resource">魔力 <b data-mana>20/70</b></span>
         <span class="ad-resource">資材 <b data-materials>80</b></span>
         <span class="ad-resource">資金 <b data-funds>40</b></span>
       </div>
@@ -150,6 +150,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         <div class="ad-upgrade-actions">
           <button type="button" class="cursor-interaction" data-clear-selection>選択解除</button>
           <button type="button" class="ad-primary cursor-interaction" data-upgrade disabled>強化する</button>
+          <button type="button" class="ad-primary cursor-interaction" data-well-research hidden>研究へ</button>
         </div>
       </section>
       <button type="button" class="cursor-interaction" data-mode="mine" aria-pressed="false">掘削</button>
@@ -162,14 +163,18 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       </div>
       <div class="ad-options">
         <article class="ad-option">
-          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg><span>装備技術</span></div>
-          <h3>鍛造理論 I</h3><p>ドワーフが改良できる武器・防具を増やす。</p>
-          <button type="button" class="cursor-interaction" data-research="鍛造理論 I">研究を指定</button>
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg><span>魔力の汲み上げ</span></div>
+          <h3 data-research-title="extraction">汲み上げ効率 Lv0 → Lv1</h3>
+          <p data-research-effect="extraction">6 → 7.2 / 時間</p>
+          <span class="ad-cost" data-research-cost="extraction"></span>
+          <button type="button" class="cursor-interaction" data-research="extraction">研究する</button>
         </article>
         <article class="ad-option">
-          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg><span>全体魔法</span></div>
-          <h3>琥珀の結界</h3><p>配下全体を守る結界魔法を習得する。</p>
-          <button type="button" class="cursor-interaction" data-research="琥珀の結界">研究を指定</button>
+          <div class="ad-symbol"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ad-icon" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg><span>魔力の蓄積</span></div>
+          <h3 data-research-title="storage">魔力貯蔵 Lv0 → Lv1</h3>
+          <p data-research-effect="storage">上限 70 → 84</p>
+          <span class="ad-cost" data-research-cost="storage"></span>
+          <button type="button" class="cursor-interaction" data-research="storage">研究する</button>
         </article>
       </div>
     </section>
@@ -205,39 +210,133 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const ctx = canvas.getContext('2d');
     const mapButton = q('.ad-map-input');
     const wrap = q('.ad-map-wrap');
-    // Temporary values for this interaction prototype, not final game balance.
-    const CONFIG = {dungeonLevel:1,manaCap:100,initialResources:{mana:20,materials:80,funds:40},manaRates:{1:1,2:2},miningSeconds:8,miningYield:20,maxFacilityLevel:2};
+    // Lv1 mana rate/cap are specified. Research bonuses/costs and other values are provisional.
+    const CONFIG = {dungeonLevel:1,baseManaHourly:6,baseManaCap:70,researchBonus:.2,maxResearchLevel:1,initialResources:{mana:20,materials:80,funds:40},miningSeconds:8,miningYield:20,maxFacilityLevel:2};
+    const SAVE_VERSION=1,STORAGE_KEY='amber-dungeon-prototype:save:v1';
+    const RESEARCH={extraction:{name:'汲み上げ効率'},storage:{name:'魔力貯蔵'}};
     const names = {well:'魔力井',archer:'エルフ弓塔',mage:'魔法塔',wall:'防壁',trap:'罠'};
     const resourceNames = {mana:'魔力',materials:'資材',funds:'資金'};
     const COSTS = {
       build:{wall:{materials:10},archer:{materials:30,funds:15},mage:{materials:25,mana:20},trap:{materials:15,funds:5}},
-      upgrade:{well:{materials:20,funds:10},archer:{materials:30,funds:10},mage:{materials:30,mana:25},wall:{materials:20},trap:{materials:20,funds:5}}
+      upgrade:{archer:{materials:30,funds:10},mage:{materials:30,mana:25},wall:{materials:20},trap:{materials:20,funds:5}},
+      research:{extraction:{mana:10,funds:10},storage:{materials:20,mana:10}}
     };
     const TOWER_POWER = {archer:{1:10,2:15},mage:{1:20,2:30}};
-    const state = {dungeonLevel:CONFIG.dungeonLevel,resources:{...CONFIG.initialResources},screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,nextStructureId:5,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,mining:{active:null,queue:[],completed:0},keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
+    const state = {dungeonLevel:CONFIG.dungeonLevel,resources:{...CONFIG.initialResources},research:{extraction:0,storage:0},manaUpdatedAt:Date.now(),screen:'main',mode:'inspect',kind:'wall',preview:null,infoTarget:null,infoSource:null,nextStructureId:5,zoom:1,panX:0,panY:0,work:'craft',orders:0,mineIndex:0,mining:{active:null,queue:[],completed:0},keyboard:{x:4,y:4},messages:{main:'準備中',research:'研究項目を選択',weapons:'工房の仕事を選択'}};
     const deposits = [{x:0,y:1,job:false},{x:0,y:4,job:false},{x:2,y:0,job:false}];
     const structures = [{id:1,x:6,y:2,type:'well',level:1},{id:2,x:3,y:3,type:'archer',level:1},{id:3,x:5,y:4,type:'wall',level:1},{id:4,x:5,y:5,type:'wall',level:1}];
     let width=0,height=0,tw=0,th=0,ox=0,oy=0;
     let colors={};
     let hitRegions=[],paintTarget=null;
+    let lastMiningTick=performance.now(),lastSaveTick=lastMiningTick;
     const readColors = () => {
       const probe = document.createElement('span');
       probe.hidden = true;root.appendChild(probe);
       ['bg','panel','panel-2','ink','sub','line','amber','amber-bg','tile','tile-alt','edge','stone','stone-dark','stone-light','green','red','blue','brown'].forEach(k=>{probe.style.color='var(--ad-'+k+')';colors[k]=getComputedStyle(probe).color;});
       probe.remove();
     };
-    function facilityName(item){return names[item.type]+' Lv'+item.level;}
+    function facilityName(item){return names[item.type]+(item.type==='well'?'':' Lv'+item.level);}
     function formatCost(cost){return ['materials','mana','funds'].filter(key=>cost?.[key]).map(key=>resourceNames[key]+' '+cost[key]).join(' ＋ ');}
     function canAfford(cost){
       return !!cost&&Object.entries(cost).every(([key,value])=>Object.hasOwn(state.resources,key)&&Number.isFinite(value)&&value>=0&&state.resources[key]>=value);
     }
-    function spendCost(cost){
+    function spendCost(cost,now=Date.now()){
+      if(!validTimestamp(now))return false;
+      settleMana(now);
       // Check every balance before changing any of them.
       if(!canAfford(cost))return false;
       for(const [key,value] of Object.entries(cost))state.resources[key]-=value;
       return true;
     }
-    function manaRate(){return structures.filter(item=>item.type==='well').reduce((sum,item)=>sum+(CONFIG.manaRates[item.level]||0),0);}
+    function manaHourlyRate(research=state.research){return Math.round(CONFIG.baseManaHourly*(1+CONFIG.researchBonus*research.extraction)*10)/10;}
+    function manaCapacity(research=state.research){return Math.round(CONFIG.baseManaCap*(1+CONFIG.researchBonus*research.storage));}
+    function validTimestamp(value){return Number.isSafeInteger(value)&&value>=0&&value<=8640000000000000;}
+    function settleMana(now=Date.now()){
+      if(!validTimestamp(now)||now<=state.manaUpdatedAt)return 0;
+      const before=state.resources.mana;
+      const elapsedHours=(now-state.manaUpdatedAt)/3600000;
+      state.resources.mana=Math.min(manaCapacity(),before+manaHourlyRate()*elapsedHours);
+      // Advance even at the cap. Never move this watermark backwards.
+      state.manaUpdatedAt=now;
+      return Math.max(0,state.resources.mana-before);
+    }
+    function getLocalStorage(){try{return window.localStorage||null;}catch{return null;}}
+    function createSnapshot(){
+      return {version:SAVE_VERSION,savedAt:state.manaUpdatedAt,dungeonLevel:state.dungeonLevel,
+        resources:{...state.resources},research:{...state.research},
+        structures:structures.map(({id,x,y,type,level})=>({id,x,y,type,level})),
+        mining:{active:state.mining.active?{...state.mining.active}:null,queue:[...state.mining.queue],completed:state.mining.completed}};
+    }
+    function validateSnapshot(raw){
+      try{
+        if(typeof raw==='string'&&raw.length>65536)return null;
+        const data=typeof raw==='string'?JSON.parse(raw):raw;
+        const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+        const count=value=>Number.isSafeInteger(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER-1000;
+        if(!record(data)||data.version!==SAVE_VERSION||data.dungeonLevel!==CONFIG.dungeonLevel||!validTimestamp(data.savedAt))return null;
+        if(!record(data.research)||![0,1].includes(data.research.extraction)||![0,1].includes(data.research.storage))return null;
+        const research={extraction:data.research.extraction,storage:data.research.storage};
+        const r=data.resources;
+        if(!record(r)||!Number.isFinite(r.mana)||r.mana<0||r.mana>manaCapacity(research)+1e-8||!count(r.materials)||!count(r.funds))return null;
+        if(!Array.isArray(data.structures)||data.structures.length<1||data.structures.length>80)return null;
+        const ids=new Set(),cells=new Set(),restoredStructures=[];
+        let wells=0;
+        for(const item of data.structures){
+          if(!record(item)||!count(item.id)||item.id<1||ids.has(item.id)||!Object.hasOwn(names,item.type))return null;
+          if(!Number.isInteger(item.x)||item.x<0||item.x>=10||!Number.isInteger(item.y)||item.y<0||item.y>=8)return null;
+          if(item.type==='well'?item.level!==1:![1,2].includes(item.level))return null;
+          const cell=item.x+','+item.y;
+          if(cells.has(cell)||deposits.some(d=>d.x===item.x&&d.y===item.y))return null;
+          ids.add(item.id);cells.add(cell);if(item.type==='well')wells++;
+          restoredStructures.push({id:item.id,x:item.x,y:item.y,type:item.type,level:item.level});
+        }
+        if(wells!==1)return null;
+        const m=data.mining,indexValid=index=>Number.isInteger(index)&&index>=0&&index<deposits.length;
+        if(!record(m)||!Array.isArray(m.queue)||m.queue.length>deposits.length||!count(m.completed))return null;
+        if(!m.queue.every(indexValid)||new Set(m.queue).size!==m.queue.length)return null;
+        let active=null;
+        if(m.active!==null){
+          if(!record(m.active)||!indexValid(m.active.index)||!Number.isFinite(m.active.remaining)||m.active.remaining<=0||m.active.remaining>CONFIG.miningSeconds||m.queue.includes(m.active.index))return null;
+          active={index:m.active.index,remaining:m.active.remaining};
+        }
+        return {version:SAVE_VERSION,savedAt:data.savedAt,dungeonLevel:data.dungeonLevel,
+          resources:{mana:Math.min(r.mana,manaCapacity(research)),materials:r.materials,funds:r.funds},research,
+          structures:restoredStructures,mining:{active,queue:[...m.queue],completed:m.completed}};
+      }catch{return null;}
+    }
+    function restoreSnapshot(raw,now=Date.now()){
+      const saved=validateSnapshot(raw);
+      if(!saved||!validTimestamp(now))return false;
+      // Validate the complete snapshot before changing any live state.
+      state.dungeonLevel=saved.dungeonLevel;
+      state.resources={...saved.resources};state.research={...saved.research};
+      structures.splice(0,structures.length,...saved.structures);
+      state.nextStructureId=Math.max(...structures.map(item=>item.id))+1;
+      state.mining={active:saved.mining.active?{...saved.mining.active}:null,queue:[...saved.mining.queue],completed:saved.mining.completed};
+      deposits.forEach((deposit,index)=>{deposit.job=state.mining.active?.index===index||state.mining.queue.includes(index);});
+      state.infoTarget=null;state.infoSource=null;state.preview=null;
+      state.manaUpdatedAt=saved.savedAt;
+      startNextMining();settleMana(now);
+      lastMiningTick=performance.now();lastSaveTick=lastMiningTick;
+      return true;
+    }
+    function saveState(now=Date.now(),storage=getLocalStorage()){
+      if(!validTimestamp(now))return false;
+      settleMana(now);
+      try{
+        if(!storage||typeof storage.setItem!=='function')return false;
+        storage.setItem(STORAGE_KEY,JSON.stringify(createSnapshot()));
+        return true;
+      }catch{return false;}
+    }
+    function loadState(now=Date.now(),storage=getLocalStorage()){
+      try{
+        if(!storage||typeof storage.getItem!=='function')return false;
+        const raw=storage.getItem(STORAGE_KEY);
+        if(raw===null||!restoreSnapshot(raw,now))return false;
+        saveState(now,storage);return true;
+      }catch{return false;}
+    }
     function startNextMining(){
       while(!state.mining.active&&state.mining.queue.length){
         const index=state.mining.queue.shift();
@@ -245,11 +344,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       }
     }
     function advanceEconomy(seconds){
+      // Mining uses visible elapsed time only. Mana is settled separately by wall clock.
       const result={manaGained:0,materialsGained:0,completed:0};
       if(document.hidden||!Number.isFinite(seconds)||seconds<=0)return result;
-      const beforeMana=state.resources.mana;
-      state.resources.mana=Math.min(CONFIG.manaCap,state.resources.mana+manaRate()*seconds);
-      result.manaGained=state.resources.mana-beforeMana;
       let remaining=seconds;
       startNextMining();
       while(remaining>0&&state.mining.active){
@@ -269,6 +366,49 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       draw();
       return result;
     }
+    function tickEconomy(now=Date.now(),monotonicNow=performance.now()){
+      const manaGained=settleMana(now);
+      let result={manaGained:0,materialsGained:0,completed:0};
+      if(Number.isFinite(monotonicNow)){
+        const seconds=Math.max(0,(monotonicNow-lastMiningTick)/1000);
+        lastMiningTick=Math.max(lastMiningTick,monotonicNow);
+        result=advanceEconomy(Math.min(seconds,1));
+        if(result.completed||monotonicNow-lastSaveTick>=5000){saveState(now);lastSaveTick=monotonicNow;}
+      }
+      refreshResources();
+      return {...result,manaGained};
+    }
+    function handleVisibilityChange(now=Date.now(),monotonicNow=performance.now()){
+      if(root.isConnected===false)return;
+      if(Number.isFinite(monotonicNow)){lastMiningTick=monotonicNow;lastSaveTick=monotonicNow;}
+      saveState(now);refreshResources();
+      if(!document.hidden)draw();
+    }
+    function updateResearchControls(){
+      qa('[data-research]').forEach(button=>{
+        const key=button.dataset.research,level=state.research[key],done=level>=CONFIG.maxResearchLevel;
+        const next={...state.research,[key]:1};
+        q('[data-research-title="'+key+'"]').textContent=RESEARCH[key].name+(done?' Lv1':' Lv0 → Lv1');
+        q('[data-research-effect="'+key+'"]').textContent=key==='extraction'?
+          (done?manaHourlyRate():manaHourlyRate()+' → '+manaHourlyRate(next))+' / 時間':
+          '上限 '+(done?manaCapacity():manaCapacity()+' → '+manaCapacity(next));
+        q('[data-research-cost="'+key+'"]').textContent=formatCost(COSTS.research[key]);
+        q('[data-research-cost="'+key+'"]').hidden=done;
+        button.disabled=done||!canAfford(COSTS.research[key]);
+        button.textContent=done?'研究済み':canAfford(COSTS.research[key])?'研究する':'資源不足';
+      });
+    }
+    function completeResearch(key,now=Date.now()){
+      if(!validTimestamp(now))return false;
+      // Settle elapsed mana using the old rate and old cap before either changes.
+      settleMana(now);
+      if(!Object.hasOwn(RESEARCH,key)||state.research[key]>=CONFIG.maxResearchLevel){refreshResources();return false;}
+      if(!spendCost(COSTS.research[key],now)){status('資源が不足しています','research');refreshResources();return false;}
+      state.research[key]=1;
+      saveState(now);refreshResources();
+      status(RESEARCH[key].name+'を研究しました','research');
+      return true;
+    }
     function updateBuildControls(){
       const cost=COSTS.build[state.kind];
       const affordable=canAfford(cost);
@@ -283,10 +423,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       if(!selected)return;
       q('[data-facility-name]').textContent=facilityName(item);
       let detail='';
-      if(item.type==='well')detail='魔力生成 '+CONFIG.manaRates[item.level]+'/秒';
+      if(item.type==='well')detail='汲み上げ '+manaHourlyRate()+'/時間 ・ 上限 '+manaCapacity();
       else if(TOWER_POWER[item.type])detail='威力 '+TOWER_POWER[item.type][item.level]+'（仮）';
       q('[data-facility-stats]').textContent=detail;
       q('[data-facility-stats]').hidden=!detail;
+      const well=item.type==='well';
+      q('[data-well-research]').hidden=!well;
+      q('[data-upgrade]').hidden=well;
+      q('[data-upgrade-cost]').hidden=well;
+      if(well){q('[data-upgrade]').disabled=true;return;}
       const capped=item.level>=CONFIG.maxFacilityLevel;
       const cost=COSTS.upgrade[item.type];
       const affordable=canAfford(cost);
@@ -294,23 +439,23 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       q('[data-upgrade]').disabled=capped||!affordable;
       q('[data-upgrade]').textContent=capped?'強化上限':affordable?'強化する':'資源不足';
     }
-    function upgradeSelected(){
+    function upgradeSelected(now=Date.now()){
       const item=state.infoTarget;
-      if(state.mode!=='inspect'||state.screen!=='main'||!item||state.infoSource==='hover'||!structures.includes(item)||item.level>=CONFIG.maxFacilityLevel)return false;
-      if(!spendCost(COSTS.upgrade[item.type])){status('資源が不足しています');updateUpgradePanel();return false;}
+      if(state.mode!=='inspect'||state.screen!=='main'||!item||item.type==='well'||state.infoSource==='hover'||!structures.includes(item)||item.level>=CONFIG.maxFacilityLevel)return false;
+      if(!spendCost(COSTS.upgrade[item.type],now)){status('資源が不足しています');refreshResources();return false;}
       item.level++;
-      refreshResources();
+      saveState(now);refreshResources();
       q('[data-inspection-status]').textContent=facilityName(item)+'に強化しました';
       status('施設を強化しました');
       draw();return true;
     }
-    function buildSelected(){
+    function buildSelected(now=Date.now()){
       const point=state.preview;
       if(state.mode!=='build'||!point||!validCell(point.x,point.y)){updateBuildControls();return false;}
-      if(!spendCost(COSTS.build[state.kind])){status('資源が不足しています');updateBuildControls();return false;}
+      if(!spendCost(COSTS.build[state.kind],now)){status('資源が不足しています');refreshResources();return false;}
       structures.push({id:state.nextStructureId++,...point,type:state.kind,level:1});
       state.preview=null;
-      refreshResources();status('施設を配置しました');draw();return true;
+      saveState(now);refreshResources();status('施設を配置しました');draw();return true;
     }
     function project(x,y,z=0){return{x:ox+(x-y)*tw,y:oy+(x+y)*th-z};}
     function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8;ctx.stroke();}if(paintTarget)hitRegions.push({target:paintTarget,points});}
@@ -345,7 +490,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
       }else if(type==='well'){
         block(x,y,tw*.35,1,colors['stone-light'],colors.stone,colors['stone-dark'],a);
         diamond(x,y,colors.edge,tw*.35,.67);
-        ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=level===2?22:14;
+        ctx.save();ctx.shadowColor=colors.amber;ctx.shadowBlur=14;
         diamond(x,y,colors.amber,tw*.35,.43);ctx.restore();
         const c=project(x,y,tw*.35);
         polygon([{x:c.x,y:c.y-tw*.9},{x:c.x+tw*.15,y:c.y-tw*.35},{x:c.x,y:c.y},{x:c.x-tw*.15,y:c.y-tw*.35}],colors.amber);
@@ -457,10 +602,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     const status = (text,screen='main') => {state.messages[screen]=text;if(state.screen===screen)q('[data-status]').textContent=text;};
     function setScreen(name){clearInspection();const focusButton=name==='main'?q('[data-go="'+state.screen+'"]'):q('[data-screen="'+name+'"]').querySelector('[data-go="main"]');state.screen=name;qa('[data-screen]').forEach(el=>{el.hidden=el.dataset.screen!==name;});q('[data-status]').textContent=state.messages[name];requestAnimationFrame(()=>{if(name==='main')resize();focusButton?.focus({preventScroll:true});});}
     function refreshResources(){
-      q('[data-mana]').textContent=Math.floor(state.resources.mana)+'/'+CONFIG.manaCap;
+      q('[data-mana]').textContent=Math.floor(state.resources.mana)+'/'+manaCapacity();
       q('[data-materials]').textContent=state.resources.materials;
       q('[data-funds]').textContent=state.resources.funds;
-      updateBuildControls();updateUpgradePanel();
+      updateBuildControls();updateUpgradePanel();updateResearchControls();
     }
     function updateMode(){
       clearInspection();
@@ -473,8 +618,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     }
     function validCell(x,y){return x>=0&&x<10&&y>=0&&y<8&&!structures.some(s=>s.x===x&&s.y===y)&&!deposits.some(d=>d.x===x&&d.y===y);}
     function previewCell(x,y){state.keyboard={x,y};if(validCell(x,y)){state.preview={x,y};status('配置位置を確認');}else{state.preview=null;status('空いているマスを選択');}updateBuildControls();draw();}
-    function markDeposit(index){
-      if(!Number.isInteger(index)||!deposits[index])return false;
+    function markDeposit(index,now=Date.now()){
+      if(!Number.isInteger(index)||!deposits[index]||!validTimestamp(now))return false;
+      const previousActive=state.mining.active?.index;
       const deposit=deposits[index];state.mineIndex=index;
       if(deposit.job){
         deposit.job=false;
@@ -485,7 +631,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         deposit.job=true;state.mining.queue.push(index);startNextMining();
         status('コボルドが順番に掘削します');
       }
-      draw();return true;
+      if(previousActive!==state.mining.active?.index)lastMiningTick=performance.now();
+      saveState(now);refreshResources();draw();return true;
     }
     function mapAction(clientX,clientY,pointerType='mouse'){const r=mapButton.getBoundingClientRect();const px=clientX-r.left,py=clientY-r.top;const ax=(px-ox)/tw,ay=(py-oy)/th;const x=Math.round((ax+ay)/2),y=Math.round((ay-ax)/2);
       if(state.mode==='build')previewCell(x,y);
@@ -496,11 +643,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     qa('[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=state.mode===b.dataset.mode?'inspect':b.dataset.mode;state.preview=null;status(state.mode==='mine'?'鉱床を選んで掘削を指定':state.mode==='build'?'空きマスを選んで配置':'準備中');updateMode();}));
     qa('[data-kind]').forEach(b=>b.addEventListener('click',()=>{if(!COSTS.build[b.dataset.kind])return;state.kind=b.dataset.kind;qa('[data-kind]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));updateBuildControls();draw();}));
     q('[data-cancel]').addEventListener('click',()=>{state.preview=null;updateBuildControls();status('空きマスを選択');draw();});
-    q('[data-confirm]').addEventListener('click',buildSelected);
-    q('[data-upgrade]').addEventListener('click',upgradeSelected);
+    q('[data-confirm]').addEventListener('click',()=>buildSelected());
+    q('[data-upgrade]').addEventListener('click',()=>upgradeSelected());
+    q('[data-well-research]').addEventListener('click',()=>{if(state.infoTarget?.type==='well')setScreen('research');});
     q('[data-clear-selection]').addEventListener('click',()=>{clearInspection(true);mapButton.focus({preventScroll:true});});
     q('[data-upgrade-panel]').addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();clearInspection(true);mapButton.focus({preventScroll:true});}});
-    qa('[data-research]').forEach(b=>b.addEventListener('click',()=>{qa('[data-research]').forEach(k=>{k.textContent=k===b?'研究に指定済み':'研究を指定';k.setAttribute('aria-pressed',String(k===b));});status('魔王の研究：'+b.dataset.research,'research');}));
+    qa('[data-research]').forEach(button=>button.addEventListener('click',()=>completeResearch(button.dataset.research)));
     qa('[data-work]').forEach(b=>b.addEventListener('click',()=>{state.work=b.dataset.work;qa('[data-work]').forEach(k=>k.setAttribute('aria-pressed',String(k===b)));const up=state.work==='upgrade';q('[data-item-name="sword"]').textContent=up?'鉄の剣 I → II':'鉄の剣';q('[data-item-name="armor"]').textContent=up?'鉄の鎧 I → II':'鉄の鎧';q('[data-item-detail="sword"]').textContent=up?'既存の武器を強化する。':'配下の近接攻撃用。';q('[data-item-detail="armor"]').textContent=up?'既存の防具を強化する。':'前衛の防御用。';qa('[data-weapon]').forEach(k=>k.textContent=up?'改良を指示':'製造を指示');}));
     qa('[data-weapon]').forEach(b=>b.addEventListener('click',()=>{state.orders++;status(b.dataset.weapon+'の'+(state.work==='upgrade'?'改良':'製造')+'を予約 ／ 工房 '+state.orders+'件','weapons');}));
     let start=null;const pointers=new Map();let pinch=null,hoverResume=null;
@@ -579,16 +727,16 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     new ResizeObserver(resize).observe(wrap);
     const mq=window.matchMedia('(prefers-color-scheme: dark)');mq.addEventListener?.('change',()=>{readColors();draw();});
     const themeObserver=new MutationObserver(()=>{readColors();draw();});themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});
+    const bootNow=Date.now();
+    if(!loadState(bootNow))saveState(bootNow);
     refreshResources();resize();
-    let lastEconomyTick=performance.now();
     const economyTimer=window.setInterval(()=>{
       if(root.isConnected===false){window.clearInterval(economyTimer);return;}
-      const now=performance.now();
-      const seconds=Math.max(0,(now-lastEconomyTick)/1000);lastEconomyTick=now;
-      // Do not replay a sleeping or throttled page's elapsed time.
-      advanceEconomy(Math.min(seconds,1));
+      tickEconomy();
     },250);
-    document.addEventListener('visibilitychange',()=>{lastEconomyTick=performance.now();});
+    document.addEventListener('visibilitychange',()=>handleVisibilityChange());
+    window.addEventListener('focus',()=>handleVisibilityChange());
+    window.addEventListener('pagehide',()=>{if(root.isConnected!==false)saveState();});
   })();
   </script>
 </div>
